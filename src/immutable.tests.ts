@@ -70,9 +70,13 @@ describe("lib", () => {
         expect(r.folders).to.be.eq(r2.folders);
 
         // Modify nested object
-        let r3 = r2
-            .set(r => r.specialFolder = r.specialFolder
-                .set(f => f.id = "f2"));
+        // Could also be:
+        // let r3 = r2
+        //     .set(r => r.specialFolder = r.specialFolder
+        //         .set(f => f.id = "f2"));
+        let r3 = r2.set(r => {
+                r.specialFolder = r.specialFolder.set(f => f.id = "f2")
+            });
         expect(r3).to.be.not.eq(r2);
         expect(r3.specialFolder).to.be.not.eq(r2.specialFolder);
         expect(r3.specialFolder.id).to.be.eq("f2");

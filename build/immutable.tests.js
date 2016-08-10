@@ -50,9 +50,13 @@ define(["require", "exports", "chai", "./immutable", "mocha"], function (require
             // Ensure un-modified properties are still the same
             chai_1.expect(r.folders).to.be.eq(r2.folders);
             // Modify nested object
-            var r3 = r2
-                .set(function (r) { return r.specialFolder = r.specialFolder
-                .set(function (f) { return f.id = "f2"; }); });
+            // Could also be:
+            // let r3 = r2
+            //     .set(r => r.specialFolder = r.specialFolder
+            //         .set(f => f.id = "f2"));
+            var r3 = r2.set(function (r) {
+                r.specialFolder = r.specialFolder.set(function (f) { return f.id = "f2"; });
+            });
             chai_1.expect(r3).to.be.not.eq(r2);
             chai_1.expect(r3.specialFolder).to.be.not.eq(r2.specialFolder);
             chai_1.expect(r3.specialFolder.id).to.be.eq("f2");
