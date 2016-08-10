@@ -1,0 +1,24 @@
+{
+  "name": "ts-immu",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "cschleiden",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "karma": "^1.1.2",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^1.0.1",
+    "karma-mocha": "^1.1.1",
+    "karma-phantomjs-launcher": "^1.0.1",
+    "karma-requirejs": "^1.0.0",
+    "mocha": "^3.0.2",
+    "requirejs": "^2.2.0",
+    "typescript": "^1.8.10",
+    "typings": "^1.3.2"
+  }
+}
