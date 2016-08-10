@@ -21,52 +21,37 @@ define(["require", "exports"], function (require, exports) {
             enumerable: true,
             configurable: true
         });
+        ImmutableArray.prototype.toArray = function () {
+            return this._t.slice(0);
+        };
         ImmutableArray.prototype.get = function (idx) {
             return this._t[idx];
+        };
+        ImmutableArray.prototype.set = function (idx, t) {
+            var clone = this._t.slice(0);
+            clone.splice(idx, 1, t);
+            return new ImmutableArray(clone);
         };
         return ImmutableArray;
     }());
     exports.ImmutableArray = ImmutableArray;
     var Immutable = (function () {
-        function Immutable(values) {
-            var _this = this;
-            this._locked = true;
-            this._modified = false;
-            this._values = {};
-            var _loop_1 = function(key) {
-                this_1._values[key] = values[key];
-                Object.defineProperty(this_1, key, {
-                    enumerable: true,
-                    get: function () {
-                        return _this._values[key];
-                    },
-                    set: function (val) {
-                        if (_this._locked) {
-                            throw new Error("Cannot mutate");
-                        }
-                        if (_this._values[key] !== val) {
-                            _this._values[key] = val;
-                            _this._modified = true;
-                        }
-                    }
-                });
-            };
-            var this_1 = this;
-            for (var key in values) {
-                _loop_1(key);
+        function Immutable(init) {
+            init();
+            if (!Immutable._cloning) {
+                Object.freeze(this);
             }
         }
-        Immutable.prototype.set = function (x) {
-            var clone = new Immutable(this._values);
-            clone._locked = false;
-            var r = x(clone);
-            clone._locked = true;
-            if (clone._modified || Boolean(r)) {
-                clone._modified = false;
-                return clone;
-            }
-            return this;
+        Immutable.build = function () { };
+        Immutable.prototype.set = function (cb) {
+            Immutable._cloning = true;
+            var clone = this._clone();
+            Immutable._cloning = false;
+            cb(clone);
+            Object.freeze(clone);
+            return clone;
         };
+        Immutable._cloning = false;
         return Immutable;
     }());
     exports.Immutable = Immutable;

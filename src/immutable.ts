@@ -1,7 +1,7 @@
 /// <reference path="../typings/index.d.ts" />
 
 export class ImmutableArray<T> {
-    constructor(private _t: T[] = []) {        
+    constructor(private _t: T[] = []) {
     }
 
     public push(...t: T[]): ImmutableArray<T> {
@@ -12,51 +12,47 @@ export class ImmutableArray<T> {
         return this._t.length;
     }
 
+    public toArray(): T[] {
+        return this._t.slice(0);
+    }
+
     public get(idx: number): T {
         return this._t[idx];
     }
+
+    public set(idx: number, t: T): ImmutableArray<T> {
+        let clone = this._t.slice(0);
+        clone.splice(idx, 1, t);
+        return new ImmutableArray<T>(clone);
+    }
 }
 
-export class Immutable<T, TC> {
-    private _values: T;
-    private _locked: boolean = true;
-    private _modified: boolean = false;
+interface IImmutable<T> {
+    set(cb: (x: IImmutable<T>) => void): IImmutable<T>;
+}
 
-    constructor(values: T) {
-        this._values = <T>{};
+export abstract class Immutable<T extends Immutable<T>> {
+    private static _cloning: boolean = false;
 
-        for (let key in values) {
-            this._values[key] = values[key];
-            
-            Object.defineProperty(this, key, {
-                enumerable: true,
-                get: () => {
-                    return this._values[key];
-                },
-                set: (val: any) => {
-                    if (this._locked) {
-                        throw new Error("Cannot mutate");
-                    }
+    constructor(init: () => void) {
+        init();
 
-                    if (this._values[key] !== val) {
-                        this._values[key] = val;
-                        this._modified = true;
-                    }
-                }
-            });
+        if (!Immutable._cloning) {
+            Object.freeze(this);
         }
     }
 
-    public set(x: (t: TC) => any): TC {
-        let clone = new Immutable<T, TC>(this._values);
-        clone._locked = false;
-        let r = x(<any>clone);
-        clone._locked = true;
-        if (clone._modified || Boolean(r)) {
-            clone._modified = false;
-            return <any>clone;
-        }
+    public static build() { }
 
-        return <any>this;
+    public set(cb: (x: T) => void): T {
+        Immutable._cloning = true;
+        let clone = this._clone();
+        Immutable._cloning = false;
+
+        cb(clone);
+        Object.freeze(clone);
+        return clone;
     }
+
+    protected abstract _clone(): T;
 }
