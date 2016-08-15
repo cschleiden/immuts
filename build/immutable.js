@@ -1,6 +1,27 @@
 /// <reference path="../typings/index.d.ts" />
 define(["require", "exports"], function (require, exports) {
     "use strict";
+    // Polyfill Object.Assign for Internet Explorer
+    if (typeof Object["assign"] != 'function') {
+        Object["assign"] = function (target) {
+            'use strict';
+            if (target == null) {
+                throw new TypeError('Cannot convert undefined or null to object');
+            }
+            target = Object(target);
+            for (var index = 1; index < arguments.length; index++) {
+                var source = arguments[index];
+                if (source != null) {
+                    for (var key in source) {
+                        if (Object.prototype.hasOwnProperty.call(source, key)) {
+                            target[key] = source[key];
+                        }
+                    }
+                }
+            }
+            return target;
+        };
+    }
     var ImmutableArray = (function () {
         function ImmutableArray(_t) {
             if (_t === void 0) { _t = []; }
@@ -55,4 +76,71 @@ define(["require", "exports"], function (require, exports) {
         return Immutable;
     }());
     exports.Immutable = Immutable;
+    var Immutable2 = (function () {
+        //#endif    
+        function Immutable2(t) {
+            this.t = t;
+        }
+        Immutable2.prototype.get = function () {
+            return this.t;
+        };
+        Immutable2._applySelector = function (parent, selector) {
+            var result = selector(parent);
+            // TODO: Check result is object/array
+            // Find name
+            var propertyName = Immutable2._findName(parent, result);
+            // Clone current node
+            var clone = Immutable2._shallowClone(result);
+            parent[propertyName] = clone;
+            return clone;
+        };
+        Immutable2._makeProp = function (parent, set) {
+            var ip = function (selector) {
+                var clone = Immutable2._applySelector(parent, selector);
+                return Immutable2._makeProp(clone, function (complete) {
+                    if (complete) {
+                        complete(clone);
+                    }
+                });
+            };
+            ip["set"] = set;
+            return ip;
+        };
+        Immutable2._findName = function (x, val) {
+            var name = null;
+            for (var _i = 0, _a = Object.keys(x); _i < _a.length; _i++) {
+                var key = _a[_i];
+                if (x[key] === val) {
+                    if (name !== null) {
+                        throw new Error("Duplicate key found");
+                    }
+                    name = key;
+                }
+            }
+            return name;
+        };
+        Immutable2.prototype.select = function (selector) {
+            var _this = this;
+            this._pendingSet = true;
+            this.t = Immutable2._shallowClone(this.t);
+            console.log("clone root");
+            var result = Immutable2._applySelector(this.t, selector);
+            return Immutable2._makeProp(result, function () {
+                _this._completeSet();
+            });
+        };
+        Immutable2._shallowClone = function (t) {
+            return Object.assign({}, t);
+        };
+        Immutable2.prototype._checkPendingOperation = function () {
+            if (this._pendingSet) {
+                throw new Error("Uncompleted set operation");
+            }
+        };
+        Immutable2.prototype._completeSet = function () {
+            this._pendingSet = false;
+        };
+        return Immutable2;
+    }());
+    exports.Immutable2 = Immutable2;
 });

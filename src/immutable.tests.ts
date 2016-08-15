@@ -3,7 +3,7 @@
 import "mocha";
 import { expect } from "chai";
 
-import { Immutable, ImmutableArray } from "./immutable";
+import { Immutable, ImmutableArray, IA, IB, IC, IImmutableProperty, Immutable2 } from "./immutable";
 
 interface IFolder {
     id: string;
@@ -56,45 +56,35 @@ class Repository extends Immutable<Repository> implements IRepository {
 
 describe("lib", () => {
     it("ts", () => {
-        // Create new immutable object, ensure it cannot be modified
-        var r = new Repository("42", new Folder("f1"), new ImmutableArray([new Folder("ff1"), new Folder("ff2")]));
-        expect(() => r.id = "23").to.throw();
-        expect(() => r2.set(r => r["specialFolder"].id = "f2")).to.throw();
-        expect(r.id).to.be.equal("42");
+        let a: IA = {
+            b: {
+                c: {
+                    id: 12,
+                    name: "c"
+                }
+            },
+            b2: {
+                c: {
+                    id: 23,
+                    name: "c2"
+                }
+            },
+            foo: "bar"
+        };
 
-        // Set property on object
-        let r2 = r.set(x => x.id = "23");
-        expect(r2).to.be.not.eq(r);
+        var i = new Immutable2(a);
+        let a1 = i.get();
+        let a11 = i.get();        
+        expect(a1).to.be.eq(a11);
 
-        // Ensure un-modified properties are still the same
-        expect(r.folders).to.be.eq(r2.folders);
+        i.select(x => x.b)(x => x.c).set(x => x.name = "12");
+        let a2 = i.get();
 
-        // Modify nested object
-        // Could also be:
-        // let r3 = r2
-        //     .set(r => r.specialFolder = r.specialFolder
-        //         .set(f => f.id = "f2"));
-        let r3 = r2.set(r => {
-                r.specialFolder = r.specialFolder.set(f => f.id = "f2")
-            });
-        expect(r3).to.be.not.eq(r2);
-        expect(r3.specialFolder).to.be.not.eq(r2.specialFolder);
-        expect(r3.specialFolder.id).to.be.eq("f2");
-        expect(r2.specialFolder.id).to.be.eq("f1");
-
-        // Call methods on new immutable instances
-        expect(r2.specialFolder.foo()).to.be.eq("f1foo");
-        expect(r3.specialFolder.foo()).to.be.eq("f2foo");
-
-        // Add element to array
-        let r4 = r3.set(r => r.folders = r.folders.push(new Folder("ff3")));
-        expect(r4.folders.length).to.be.eq(3);
-        expect(r3.folders.length).to.be.eq(2);        
-        expect(r4.folders).to.be.not.eq(r3.folders);
-
-        // Change element in array
-        let r5 = r4.set(r => r.folders = r.folders.set(0, r.folders.get(0).set(f => f.id = "ff12")));
-        expect(r5.folders.toArray().map(f => f.id)).to.deep.equal(["ff12", "ff2", "ff3"]);
+        expect(a1).to.be.not.eq(a2, "Root is cloned for change");
+        expect(a1.b).to.be.not.eq(a2.b, "Path is cloned for change");  
+        expect(a1.b.c).to.be.not.eq(a2.b.c, "Path is cloned for change");
+        expect(a2.b.c.name).to.be.equal("12");
+        expect(a2.b2).to.be.deep.equal(a1.b2, "Only changed paths are cloned");
     });
 });
 

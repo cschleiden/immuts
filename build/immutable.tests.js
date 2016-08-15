@@ -39,39 +39,32 @@ define(["require", "exports", "chai", "./immutable", "mocha"], function (require
     }(immutable_1.Immutable));
     describe("lib", function () {
         it("ts", function () {
-            // Create new immutable object, ensure it cannot be modified
-            var r = new Repository("42", new Folder("f1"), new immutable_1.ImmutableArray([new Folder("ff1"), new Folder("ff2")]));
-            chai_1.expect(function () { return r.id = "23"; }).to.throw();
-            chai_1.expect(function () { return r2.set(function (r) { return r["specialFolder"].id = "f2"; }); }).to.throw();
-            chai_1.expect(r.id).to.be.equal("42");
-            // Set property on object
-            var r2 = r.set(function (x) { return x.id = "23"; });
-            chai_1.expect(r2).to.be.not.eq(r);
-            // Ensure un-modified properties are still the same
-            chai_1.expect(r.folders).to.be.eq(r2.folders);
-            // Modify nested object
-            // Could also be:
-            // let r3 = r2
-            //     .set(r => r.specialFolder = r.specialFolder
-            //         .set(f => f.id = "f2"));
-            var r3 = r2.set(function (r) {
-                r.specialFolder = r.specialFolder.set(function (f) { return f.id = "f2"; });
-            });
-            chai_1.expect(r3).to.be.not.eq(r2);
-            chai_1.expect(r3.specialFolder).to.be.not.eq(r2.specialFolder);
-            chai_1.expect(r3.specialFolder.id).to.be.eq("f2");
-            chai_1.expect(r2.specialFolder.id).to.be.eq("f1");
-            // Call methods on new immutable instances
-            chai_1.expect(r2.specialFolder.foo()).to.be.eq("f1foo");
-            chai_1.expect(r3.specialFolder.foo()).to.be.eq("f2foo");
-            // Add element to array
-            var r4 = r3.set(function (r) { return r.folders = r.folders.push(new Folder("ff3")); });
-            chai_1.expect(r4.folders.length).to.be.eq(3);
-            chai_1.expect(r3.folders.length).to.be.eq(2);
-            chai_1.expect(r4.folders).to.be.not.eq(r3.folders);
-            // Change element in array
-            var r5 = r4.set(function (r) { return r.folders = r.folders.set(0, r.folders.get(0).set(function (f) { return f.id = "ff12"; })); });
-            chai_1.expect(r5.folders.toArray().map(function (f) { return f.id; })).to.deep.equal(["ff12", "ff2", "ff3"]);
+            var a = {
+                b: {
+                    c: {
+                        id: 12,
+                        name: "c"
+                    }
+                },
+                b2: {
+                    c: {
+                        id: 23,
+                        name: "c2"
+                    }
+                },
+                foo: "bar"
+            };
+            var i = new immutable_1.Immutable2(a);
+            var a1 = i.get();
+            var a11 = i.get();
+            chai_1.expect(a1).to.be.eq(a11);
+            i.select(function (x) { return x.b; })(function (x) { return x.c; }).set(function (x) { return x.name = "12"; });
+            var a2 = i.get();
+            chai_1.expect(a1).to.be.not.eq(a2, "Root is cloned for change");
+            chai_1.expect(a1.b).to.be.not.eq(a2.b, "Path is cloned for change");
+            chai_1.expect(a1.b.c).to.be.not.eq(a2.b.c, "Path is cloned for change");
+            chai_1.expect(a2.b.c.name).to.be.equal("12");
+            chai_1.expect(a2.b2).to.be.deep.equal(a1.b2, "Only changed paths are cloned");
         });
     });
     describe("array", function () {

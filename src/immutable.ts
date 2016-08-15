@@ -1,5 +1,28 @@
 /// <reference path="../typings/index.d.ts" />
 
+// Polyfill Object.Assign for Internet Explorer
+if (typeof Object["assign"] != 'function') {
+    Object["assign"] = function (target) {
+        'use strict';
+        if (target == null) {
+            throw new TypeError('Cannot convert undefined or null to object');
+        }
+
+        target = Object(target);
+        for (var index = 1; index < arguments.length; index++) {
+            var source = arguments[index];
+            if (source != null) {
+                for (var key in source) {
+                    if (Object.prototype.hasOwnProperty.call(source, key)) {
+                        target[key] = source[key];
+                    }
+                }
+            }
+        }
+        return target;
+    };
+}
+
 export class ImmutableArray<T> {
     constructor(private _t: T[] = []) {
     }
@@ -55,4 +78,110 @@ export abstract class Immutable<T extends Immutable<T>> {
     }
 
     protected abstract _clone(): T;
+}
+
+export interface IA {
+    b: IB;
+    b2: IB;
+    foo: string;
+}
+
+export interface IB {
+    c: IC;
+}
+
+export interface IC {
+    name: string;
+    id: number;
+}
+
+export interface IImmutableProperty<T> {
+    <U>(x: (t: T) => U): IImmutableProperty<U>;
+    set(x: (t: T) => void): void;
+}
+
+export class Immutable2<T> {
+    //#if DEBUG
+    private _pendingSet: boolean;
+    //#endif    
+
+    constructor(private t: T) {
+    }
+
+    public get(): T {
+        return this.t;
+    }
+
+    private static _applySelector<TParent, TValue>(parent: TParent, selector: (TParent) => TValue): TValue {
+        let result = selector(parent);
+
+        // TODO: Check result is object/array
+
+        // Find name
+        let propertyName = Immutable2._findName(parent, result);
+
+        // Clone current node
+        let clone = Immutable2._shallowClone(result);
+        parent[propertyName] = clone;
+
+        return clone;
+    }
+
+    private static _makeProp<TParent, TValue>(parent: TParent, set: Function): IImmutableProperty<TParent> {
+        let ip = (selector: (TParent) => TValue): IImmutableProperty<TValue> => {
+            let clone = Immutable2._applySelector(parent, selector);
+
+            return Immutable2._makeProp(clone, (complete: (TValue) => void) => {
+                if (complete) {
+                    complete(clone);
+                }
+            });
+        };
+        ip["set"] = set;
+
+        return <IImmutableProperty<TParent>>ip;
+    }
+
+    private static _findName<X, Y>(x: X, val: Y): string {
+        let name: string = null;
+
+        for (let key of Object.keys(x)) {
+            if (x[key] === val) {
+                if (name !== null) {
+                    throw new Error("Duplicate key found");
+                }
+
+                name = key;
+            }
+        }
+
+        return name;
+    }
+
+    public select<TValue>(selector: (T) => TValue): IImmutableProperty<TValue> {
+        this._pendingSet = true;
+
+        this.t = Immutable2._shallowClone(this.t);
+        console.log("clone root");
+
+        let result = Immutable2._applySelector(this.t, selector);
+
+        return Immutable2._makeProp(result, () => {
+            this._completeSet();
+        });
+    }
+
+    private static _shallowClone<T>(t: T): T {
+        return (<any>Object).assign({}, t);
+    }
+
+    private _checkPendingOperation() {
+        if (this._pendingSet) {
+            throw new Error("Uncompleted set operation");
+        }
+    }
+
+    private _completeSet() {
+        this._pendingSet = false;
+    }
 }
