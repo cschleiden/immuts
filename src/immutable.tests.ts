@@ -89,7 +89,7 @@ describe("lib", () => {
         expect(a2.b2).to.be.deep.equal(a1.b2, "Only changed paths are cloned");
         
         i.set()(x => x.b2).val(x => x.ar = [3,4]);
-        i.set().val(x => x.foo = "bar2");
+        i.set(x => x.foo = "bar2");
         let a3 = i.get();
 
         expect(a3.foo).to.be.equal("bar2");

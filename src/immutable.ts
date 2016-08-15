@@ -96,6 +96,10 @@ export interface IC {
     id: number;
 }
 
+export interface IImmutableClone<T> {
+    clone(): T;
+}
+
 export interface IImmutableProperty<T> {
     <U>(x: (t: T) => U): IImmutableProperty<U>;
     val(x: (t: T) => void): void;
@@ -110,6 +114,8 @@ export class Immutable2<T> {
     }
 
     public get(): T {
+        this._checkPendingOperation();
+
         return this.t;
     }
 
@@ -128,7 +134,7 @@ export class Immutable2<T> {
         return clone;
     }
 
-    private static _makeProp<TParent, TValue>(parent: TParent, val: (TValue) => void): IImmutableProperty<TParent> {
+    private static _makeProp<TParent, TValue>(parent: TParent, val: (TValue) => void, done: Function): IImmutableProperty<TParent> {
         let ip = (selector: (TParent) => TValue): IImmutableProperty<TValue> => {
             let clone = Immutable2._applySelector(parent, selector);
 
@@ -136,7 +142,9 @@ export class Immutable2<T> {
                 if (complete) {
                     complete(clone);
                 }
-            });
+
+                done();
+            }, done);
         };
         ip["val"] = val;
 
@@ -159,22 +167,51 @@ export class Immutable2<T> {
         return name;
     }
 
-    public set(): IImmutableProperty<T> {
+    /**
+     * Start setting value on immutable object  
+     * @param val Method changing value
+     */
+    public set(val?: (T) => void): IImmutableProperty<T> {
         this._pendingSet = true;
 
         this.t = Immutable2._shallowClone(this.t);
         console.log("clone root");
 
-        return Immutable2._makeProp(this.t, (complete: (TValue) => void) => {
-            if (complete) {
-                complete(this.t);
-            }
+        if (val) {
+            val(this.t);
 
             this._completeSet();
-        });
+        } else {
+            return Immutable2._makeProp(this.t, (complete: (T) => void) => {
+                if (complete) {
+                    complete(this.t);
+                }
+            }, () => {
+                this._completeSet();
+            });
+        }
     }
 
     private static _shallowClone<T>(t: T): T {
+        /*
+                let clone: T = <T>{};
+        
+                for (let key of Object.keys(t)) {
+                    if (typeof key === "string"
+                        || typeof key === "number") {
+                        clone[key] = t[key];
+                    } else {
+                        if (t[key].clone) {
+                            clone[key] = t[key].clone();
+                        } else {
+                            clone[key] = t[key];
+                        }
+                    }            
+                }
+                
+                return clone;
+        */
+        // TODO: Allow cloning complex objects?
         return (<any>Object).assign({}, t);
     }
 

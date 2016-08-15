@@ -82,6 +82,7 @@ define(["require", "exports"], function (require, exports) {
             this.t = t;
         }
         Immutable2.prototype.get = function () {
+            this._checkPendingOperation();
             return this.t;
         };
         Immutable2._applySelector = function (parent, selector) {
@@ -94,14 +95,15 @@ define(["require", "exports"], function (require, exports) {
             parent[propertyName] = clone;
             return clone;
         };
-        Immutable2._makeProp = function (parent, val) {
+        Immutable2._makeProp = function (parent, val, done) {
             var ip = function (selector) {
                 var clone = Immutable2._applySelector(parent, selector);
                 return Immutable2._makeProp(clone, function (complete) {
                     if (complete) {
                         complete(clone);
                     }
-                });
+                    done();
+                }, done);
             };
             ip["val"] = val;
             return ip;
@@ -119,19 +121,49 @@ define(["require", "exports"], function (require, exports) {
             }
             return name;
         };
-        Immutable2.prototype.set = function () {
+        /**
+         * Start setting value on immutable object
+         * @param val Method changing value
+         */
+        Immutable2.prototype.set = function (val) {
             var _this = this;
             this._pendingSet = true;
             this.t = Immutable2._shallowClone(this.t);
             console.log("clone root");
-            return Immutable2._makeProp(this.t, function (complete) {
-                if (complete) {
-                    complete(_this.t);
-                }
-                _this._completeSet();
-            });
+            if (val) {
+                val(this.t);
+                this._completeSet();
+            }
+            else {
+                return Immutable2._makeProp(this.t, function (complete) {
+                    if (complete) {
+                        complete(_this.t);
+                    }
+                }, function () {
+                    _this._completeSet();
+                });
+            }
         };
         Immutable2._shallowClone = function (t) {
+            /*
+                    let clone: T = <T>{};
+            
+                    for (let key of Object.keys(t)) {
+                        if (typeof key === "string"
+                            || typeof key === "number") {
+                            clone[key] = t[key];
+                        } else {
+                            if (t[key].clone) {
+                                clone[key] = t[key].clone();
+                            } else {
+                                clone[key] = t[key];
+                            }
+                        }
+                    }
+                    
+                    return clone;
+            */
+            // TODO: Allow cloning complex objects?
             return Object.assign({}, t);
         };
         Immutable2.prototype._checkPendingOperation = function () {
