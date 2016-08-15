@@ -44,13 +44,15 @@ define(["require", "exports", "chai", "./immutable", "mocha"], function (require
                     c: {
                         id: 12,
                         name: "c"
-                    }
+                    },
+                    ar: [1, 2]
                 },
                 b2: {
                     c: {
                         id: 23,
                         name: "c2"
-                    }
+                    },
+                    ar: [2, 3]
                 },
                 foo: "bar"
             };
@@ -58,13 +60,18 @@ define(["require", "exports", "chai", "./immutable", "mocha"], function (require
             var a1 = i.get();
             var a11 = i.get();
             chai_1.expect(a1).to.be.eq(a11);
-            i.select(function (x) { return x.b; })(function (x) { return x.c; }).set(function (x) { return x.name = "12"; });
+            i.set()(function (x) { return x.b; })(function (x) { return x.c; }).val(function (x) { return x.name = "12"; });
             var a2 = i.get();
             chai_1.expect(a1).to.be.not.eq(a2, "Root is cloned for change");
             chai_1.expect(a1.b).to.be.not.eq(a2.b, "Path is cloned for change");
             chai_1.expect(a1.b.c).to.be.not.eq(a2.b.c, "Path is cloned for change");
             chai_1.expect(a2.b.c.name).to.be.equal("12");
             chai_1.expect(a2.b2).to.be.deep.equal(a1.b2, "Only changed paths are cloned");
+            i.set()(function (x) { return x.b2; }).val(function (x) { return x.ar = [3, 4]; });
+            i.set().val(function (x) { return x.foo = "bar2"; });
+            var a3 = i.get();
+            chai_1.expect(a3.foo).to.be.equal("bar2");
+            chai_1.expect(a3.b2.ar).to.be.not.equal(a2.b2.ar);
         });
     });
     describe("array", function () {

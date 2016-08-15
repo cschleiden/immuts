@@ -94,7 +94,7 @@ define(["require", "exports"], function (require, exports) {
             parent[propertyName] = clone;
             return clone;
         };
-        Immutable2._makeProp = function (parent, set) {
+        Immutable2._makeProp = function (parent, val) {
             var ip = function (selector) {
                 var clone = Immutable2._applySelector(parent, selector);
                 return Immutable2._makeProp(clone, function (complete) {
@@ -103,7 +103,7 @@ define(["require", "exports"], function (require, exports) {
                     }
                 });
             };
-            ip["set"] = set;
+            ip["val"] = val;
             return ip;
         };
         Immutable2._findName = function (x, val) {
@@ -119,13 +119,15 @@ define(["require", "exports"], function (require, exports) {
             }
             return name;
         };
-        Immutable2.prototype.select = function (selector) {
+        Immutable2.prototype.set = function () {
             var _this = this;
             this._pendingSet = true;
             this.t = Immutable2._shallowClone(this.t);
             console.log("clone root");
-            var result = Immutable2._applySelector(this.t, selector);
-            return Immutable2._makeProp(result, function () {
+            return Immutable2._makeProp(this.t, function (complete) {
+                if (complete) {
+                    complete(_this.t);
+                }
                 _this._completeSet();
             });
         };

@@ -61,13 +61,15 @@ describe("lib", () => {
                 c: {
                     id: 12,
                     name: "c"
-                }
+                },
+                ar: [1, 2]
             },
             b2: {
                 c: {
                     id: 23,
                     name: "c2"
-                }
+                },
+                ar: [2, 3]
             },
             foo: "bar"
         };
@@ -77,7 +79,7 @@ describe("lib", () => {
         let a11 = i.get();        
         expect(a1).to.be.eq(a11);
 
-        i.select(x => x.b)(x => x.c).set(x => x.name = "12");
+        i.set()(x => x.b)(x => x.c).val(x => x.name = "12");
         let a2 = i.get();
 
         expect(a1).to.be.not.eq(a2, "Root is cloned for change");
@@ -85,6 +87,13 @@ describe("lib", () => {
         expect(a1.b.c).to.be.not.eq(a2.b.c, "Path is cloned for change");
         expect(a2.b.c.name).to.be.equal("12");
         expect(a2.b2).to.be.deep.equal(a1.b2, "Only changed paths are cloned");
+        
+        i.set()(x => x.b2).val(x => x.ar = [3,4]);
+        i.set().val(x => x.foo = "bar2");
+        let a3 = i.get();
+
+        expect(a3.foo).to.be.equal("bar2");
+        expect(a3.b2.ar).to.be.not.equal(a2.b2.ar);
     });
 });
 

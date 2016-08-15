@@ -88,6 +88,7 @@ export interface IA {
 
 export interface IB {
     c: IC;
+    ar: number[];
 }
 
 export interface IC {
@@ -97,7 +98,7 @@ export interface IC {
 
 export interface IImmutableProperty<T> {
     <U>(x: (t: T) => U): IImmutableProperty<U>;
-    set(x: (t: T) => void): void;
+    val(x: (t: T) => void): void;
 }
 
 export class Immutable2<T> {
@@ -127,7 +128,7 @@ export class Immutable2<T> {
         return clone;
     }
 
-    private static _makeProp<TParent, TValue>(parent: TParent, set: Function): IImmutableProperty<TParent> {
+    private static _makeProp<TParent, TValue>(parent: TParent, val: (TValue) => void): IImmutableProperty<TParent> {
         let ip = (selector: (TParent) => TValue): IImmutableProperty<TValue> => {
             let clone = Immutable2._applySelector(parent, selector);
 
@@ -137,7 +138,7 @@ export class Immutable2<T> {
                 }
             });
         };
-        ip["set"] = set;
+        ip["val"] = val;
 
         return <IImmutableProperty<TParent>>ip;
     }
@@ -158,15 +159,17 @@ export class Immutable2<T> {
         return name;
     }
 
-    public select<TValue>(selector: (T) => TValue): IImmutableProperty<TValue> {
+    public set(): IImmutableProperty<T> {
         this._pendingSet = true;
 
         this.t = Immutable2._shallowClone(this.t);
         console.log("clone root");
 
-        let result = Immutable2._applySelector(this.t, selector);
+        return Immutable2._makeProp(this.t, (complete: (TValue) => void) => {
+            if (complete) {
+                complete(this.t);
+            }
 
-        return Immutable2._makeProp(result, () => {
             this._completeSet();
         });
     }
