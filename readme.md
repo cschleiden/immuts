@@ -1,15 +1,15 @@
-## Work in Progress! ##
+## Work in Progress!
 
 Title
 =====
 
 Initial attempt at providing a type-safe, generic immutable datastructure for Typescript.  
 
-## Motivation ##
+## Motivation
 
-## Usage ## 
+## Usage 
 
-### Simple ###
+### Simple
 
 ```TypeScript
 interface IA {
@@ -28,7 +28,7 @@ let a2 = i.set(x => x.id = 23);
 // a !== a2 => true
 ```
 
-### Nested ###  
+### Nested  
 
 ```TypeScript
 interface IA {
@@ -60,7 +60,7 @@ let b2 = i.set()(x => x.a1).val(x => x.id = 12);
 // b.a1 !== b2.a1 => true
 ```
 
-### Complex Types ###
+### Complex Types
 
 Plain JS objects can be easily cloned. When you have more complex objects, a custom `CloneStrategy` can be used:
 
@@ -116,7 +116,7 @@ let a2 = a.set(x => x.bar = "42");
 // a2.bar === "42" => true
 ```
 
-## Limitations ##
+## Limitations
 
 Object values in nested scenario have to be unique, due to the lack of a reliable way of identifying property names in Typescript. Something like 
 
@@ -133,11 +133,12 @@ let b = {
 
 will fail. For a call like `i.set()(x => a1)` the `"a1"` name cannot be reliably identified, because `a1` and `a2` point to the same value. A feature like `nameof` in C# would solve a lot of these problems.
 
-## Outlook ##
+## Outlook
 
 
 
-## TODO ##
+## TODO
 
-- Use something like `immutable-js` for internal storage
-- Provide example for arrays  
+- Maybe use `immutable-js` for internal storage
+- Provide example(s) and tests for arrays
+- lots more :)  
