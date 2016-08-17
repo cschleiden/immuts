@@ -1,27 +1,6 @@
 /// <reference path="../typings/index.d.ts" />
-define(["require", "exports"], function (require, exports) {
+define(["require", "exports", "./common", "./strategies/clone"], function (require, exports, common_1, clone_1) {
     "use strict";
-    // Polyfill Object.Assign for Internet Explorer
-    if (typeof Object["assign"] != 'function') {
-        Object["assign"] = function (target) {
-            'use strict';
-            if (target == null) {
-                throw new TypeError('Cannot convert undefined or null to object');
-            }
-            target = Object(target);
-            for (var index = 1; index < arguments.length; index++) {
-                var source = arguments[index];
-                if (source != null) {
-                    for (var key in source) {
-                        if (Object.prototype.hasOwnProperty.call(source, key)) {
-                            target[key] = source[key];
-                        }
-                    }
-                }
-            }
-            return target;
-        };
-    }
     var ImmutableArray = (function () {
         function ImmutableArray(_t) {
             if (_t === void 0) { _t = []; }
@@ -57,58 +36,42 @@ define(["require", "exports"], function (require, exports) {
     }());
     exports.ImmutableArray = ImmutableArray;
     var Immutable = (function () {
-        function Immutable(init) {
-            init();
-            if (!Immutable._cloning) {
-                Object.freeze(this);
-            }
-        }
-        Immutable.build = function () { };
-        Immutable.prototype.set = function (cb) {
-            Immutable._cloning = true;
-            var clone = this._clone();
-            Immutable._cloning = false;
-            cb(clone);
-            Object.freeze(clone);
-            return clone;
-        };
-        Immutable._cloning = false;
-        return Immutable;
-    }());
-    exports.Immutable = Immutable;
-    var Immutable2 = (function () {
         //#endif    
-        function Immutable2(t) {
-            this.t = t;
+        function Immutable(data, cloneStrategy) {
+            if (cloneStrategy === void 0) { cloneStrategy = new clone_1.DefaultCloneStrategy(); }
+            this.data = data;
+            this.cloneStrategy = cloneStrategy;
+            this._completeSet();
         }
-        Immutable2.prototype.get = function () {
+        Immutable.prototype.get = function () {
             this._checkPendingOperation();
-            return this.t;
+            return this.data;
         };
-        Immutable2._applySelector = function (parent, selector) {
+        Immutable.prototype._applySelector = function (parent, selector) {
             var result = selector(parent);
             // TODO: Check result is object/array
             // Find name
-            var propertyName = Immutable2._findName(parent, result);
+            var propertyName = Immutable._findName(parent, result);
             // Clone current node
-            var clone = Immutable2._shallowClone(result);
+            var clone = this.cloneStrategy.clone(result);
             parent[propertyName] = clone;
             return clone;
         };
-        Immutable2._makeProp = function (parent, val, done) {
+        Immutable.prototype._makeProp = function (parent, val) {
+            var _this = this;
             var ip = function (selector) {
-                var clone = Immutable2._applySelector(parent, selector);
-                return Immutable2._makeProp(clone, function (complete) {
+                var clone = _this._applySelector(parent, selector);
+                return _this._makeProp(clone, function (complete) {
                     if (complete) {
                         complete(clone);
                     }
-                    done();
-                }, done);
+                    _this._completeSet();
+                });
             };
             ip["val"] = val;
             return ip;
         };
-        Immutable2._findName = function (x, val) {
+        Immutable._findName = function (x, val) {
             var name = null;
             for (var _i = 0, _a = Object.keys(x); _i < _a.length; _i++) {
                 var key = _a[_i];
@@ -121,60 +84,36 @@ define(["require", "exports"], function (require, exports) {
             }
             return name;
         };
-        /**
-         * Start setting value on immutable object
-         * @param val Method changing value
-         */
-        Immutable2.prototype.set = function (val) {
+        Immutable.prototype.set = function (val) {
             var _this = this;
             this._pendingSet = true;
-            this.t = Immutable2._shallowClone(this.t);
-            console.log("clone root");
+            this.data = this.cloneStrategy.clone(this.data);
             if (val) {
-                val(this.t);
+                // Set value directly
+                val(this.data);
                 this._completeSet();
+                return this.data;
             }
             else {
-                return Immutable2._makeProp(this.t, function (complete) {
+                return this._makeProp(this.data, function (complete) {
                     if (complete) {
-                        complete(_this.t);
+                        complete(_this.data);
                     }
-                }, function () {
-                    _this._completeSet();
                 });
             }
         };
-        Immutable2._shallowClone = function (t) {
-            /*
-                    let clone: T = <T>{};
-            
-                    for (let key of Object.keys(t)) {
-                        if (typeof key === "string"
-                            || typeof key === "number") {
-                            clone[key] = t[key];
-                        } else {
-                            if (t[key].clone) {
-                                clone[key] = t[key].clone();
-                            } else {
-                                clone[key] = t[key];
-                            }
-                        }
-                    }
-                    
-                    return clone;
-            */
-            // TODO: Allow cloning complex objects?
-            return Object.assign({}, t);
-        };
-        Immutable2.prototype._checkPendingOperation = function () {
+        Immutable.prototype._checkPendingOperation = function () {
             if (this._pendingSet) {
                 throw new Error("Uncompleted set operation");
             }
         };
-        Immutable2.prototype._completeSet = function () {
+        Immutable.prototype._completeSet = function () {
             this._pendingSet = false;
+            if (common_1.debug) {
+                Object.freeze(this.data);
+            }
         };
-        return Immutable2;
+        return Immutable;
     }());
-    exports.Immutable2 = Immutable2;
+    exports.Immutable = Immutable;
 });

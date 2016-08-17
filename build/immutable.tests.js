@@ -1,43 +1,7 @@
 /// <reference path="../typings/index.d.ts" />
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
 define(["require", "exports", "chai", "./immutable", "mocha"], function (require, exports, chai_1, immutable_1) {
     "use strict";
-    var Folder = (function (_super) {
-        __extends(Folder, _super);
-        function Folder(id) {
-            var _this = this;
-            _super.call(this, function () {
-                _this.id = id;
-            });
-        }
-        Folder.prototype.foo = function () {
-            return this.id + "foo";
-        };
-        Folder.prototype._clone = function () {
-            return new Folder(this.id);
-        };
-        return Folder;
-    }(immutable_1.Immutable));
-    var Repository = (function (_super) {
-        __extends(Repository, _super);
-        function Repository(id, specialFolder, folders) {
-            var _this = this;
-            _super.call(this, function () {
-                _this.id = id;
-                _this.specialFolder = specialFolder;
-                _this.folders = folders;
-            });
-        }
-        Repository.prototype._clone = function () {
-            return new Repository(this.id, this.specialFolder, this.folders);
-        };
-        return Repository;
-    }(immutable_1.Immutable));
-    describe("lib", function () {
+    describe("Immutable", function () {
         it("ts", function () {
             var a = {
                 b: {
@@ -56,10 +20,12 @@ define(["require", "exports", "chai", "./immutable", "mocha"], function (require
                 },
                 foo: "bar"
             };
-            var i = new immutable_1.Immutable2(a);
+            var i = new immutable_1.Immutable(a);
             var a1 = i.get();
             var a11 = i.get();
             chai_1.expect(a1).to.be.eq(a11);
+            chai_1.expect(function () { return a1.b = null; }).to.throws();
+            chai_1.expect(a1.b).to.be.not.eq(null);
             i.set()(function (x) { return x.b; })(function (x) { return x.c; }).val(function (x) { return x.name = "12"; });
             var a2 = i.get();
             chai_1.expect(a1).to.be.not.eq(a2, "Root is cloned for change");
@@ -74,13 +40,49 @@ define(["require", "exports", "chai", "./immutable", "mocha"], function (require
             chai_1.expect(a3.b2.ar).to.be.not.equal(a2.b2.ar);
         });
     });
-    describe("array", function () {
-        it("should copy for push", function () {
-            var a = new immutable_1.ImmutableArray();
-            var a2 = a.push(1, 2);
+    var X = (function () {
+        function X(foo) {
+            this.foo = foo;
+        }
+        return X;
+    }());
+    var Y = (function () {
+        function Y(bar) {
+            this.bar = bar;
+        }
+        Y.prototype.clone = function () {
+            return new Y(this.bar);
+        };
+        return Y;
+    }());
+    var CustomCloneStrategy = (function () {
+        function CustomCloneStrategy() {
+        }
+        CustomCloneStrategy.prototype.clone = function (source) {
+            if (source instanceof X) {
+                return new X(source.foo);
+            }
+            else if (source.clone) {
+                return source.clone();
+            }
+            throw new Error("Type not supported");
+        };
+        return CustomCloneStrategy;
+    }());
+    describe("CustomCloneStrategy", function () {
+        it("is used", function () {
+            var a = new immutable_1.Immutable(new X(23), new CustomCloneStrategy());
+            a.set(function (x) { return x.foo = 42; });
+            var a2 = a.get();
             chai_1.expect(a).to.be.not.equal(a2);
-            chai_1.expect(a.length).to.be.eq(0);
-            chai_1.expect(a2.length).to.be.eq(2);
+            chai_1.expect(a2.foo).to.be.equal(42);
+        });
+        it("is used for multiple types", function () {
+            var a = new immutable_1.Immutable(new Y("23"), new CustomCloneStrategy());
+            a.set(function (x) { return x.bar = "42"; });
+            var a2 = a.get();
+            chai_1.expect(a).to.be.not.equal(a2);
+            chai_1.expect(a2.bar).to.be.equal("42");
         });
     });
 });

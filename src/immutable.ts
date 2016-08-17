@@ -1,28 +1,9 @@
 /// <reference path="../typings/index.d.ts" />
 
-// Polyfill Object.Assign for Internet Explorer
-if (typeof Object["assign"] != 'function') {
-    Object["assign"] = function (target) {
-        'use strict';
-        if (target == null) {
-            throw new TypeError('Cannot convert undefined or null to object');
-        }
+import { debug } from "./common";
+import { IImmutableCloneStrategy, DefaultCloneStrategy } from "./strategies/clone";
 
-        target = Object(target);
-        for (var index = 1; index < arguments.length; index++) {
-            var source = arguments[index];
-            if (source != null) {
-                for (var key in source) {
-                    if (Object.prototype.hasOwnProperty.call(source, key)) {
-                        target[key] = source[key];
-                    }
-                }
-            }
-        }
-        return target;
-    };
-}
-
+export type IImmutableCloneStrategy = IImmutableCloneStrategy;
 export class ImmutableArray<T> {
     constructor(private _t: T[] = []) {
     }
@@ -50,52 +31,6 @@ export class ImmutableArray<T> {
     }
 }
 
-interface IImmutable<T> {
-    set(cb: (x: IImmutable<T>) => void): IImmutable<T>;
-}
-
-export abstract class Immutable<T extends Immutable<T>> {
-    private static _cloning: boolean = false;
-
-    constructor(init: () => void) {
-        init();
-
-        if (!Immutable._cloning) {
-            Object.freeze(this);
-        }
-    }
-
-    public static build() { }
-
-    public set(cb: (x: T) => void): T {
-        Immutable._cloning = true;
-        let clone = this._clone();
-        Immutable._cloning = false;
-
-        cb(clone);
-        Object.freeze(clone);
-        return clone;
-    }
-
-    protected abstract _clone(): T;
-}
-
-export interface IA {
-    b: IB;
-    b2: IB;
-    foo: string;
-}
-
-export interface IB {
-    c: IC;
-    ar: number[];
-}
-
-export interface IC {
-    name: string;
-    id: number;
-}
-
 export interface IImmutableClone<T> {
     clone(): T;
 }
@@ -105,46 +40,51 @@ export interface IImmutableProperty<T> {
     val(x: (t: T) => void): void;
 }
 
-export class Immutable2<T> {
+export class Immutable<T> {
     //#if DEBUG
     private _pendingSet: boolean;
     //#endif    
 
-    constructor(private t: T) {
+    constructor(
+        private data: T,
+        private cloneStrategy: IImmutableCloneStrategy = new DefaultCloneStrategy()) {
+        this._completeSet();
     }
 
     public get(): T {
         this._checkPendingOperation();
 
-        return this.t;
+        return this.data;
     }
 
-    private static _applySelector<TParent, TValue>(parent: TParent, selector: (TParent) => TValue): TValue {
+    private _applySelector<TParent, TValue>(parent: TParent, selector: (TParent) => TValue): TValue {
         let result = selector(parent);
 
         // TODO: Check result is object/array
 
         // Find name
-        let propertyName = Immutable2._findName(parent, result);
+        let propertyName = Immutable._findName(parent, result);
 
         // Clone current node
-        let clone = Immutable2._shallowClone(result);
+        let clone = this.cloneStrategy.clone(result);
         parent[propertyName] = clone;
 
         return clone;
     }
 
-    private static _makeProp<TParent, TValue>(parent: TParent, val: (TValue) => void, done: Function): IImmutableProperty<TParent> {
+    private _makeProp<TParent, TValue>(parent: TParent, val: (TValue) => void): IImmutableProperty<TParent> {
         let ip = (selector: (TParent) => TValue): IImmutableProperty<TValue> => {
-            let clone = Immutable2._applySelector(parent, selector);
+            let clone = this._applySelector(parent, selector);
 
-            return Immutable2._makeProp(clone, (complete: (TValue) => void) => {
-                if (complete) {
-                    complete(clone);
-                }
+            return this._makeProp(
+                clone,
+                (complete: (TValue) => void) => {
+                    if (complete) {
+                        complete(clone);
+                    }
 
-                done();
-            }, done);
+                    this._completeSet();
+                });
         };
         ip["val"] = val;
 
@@ -170,49 +110,30 @@ export class Immutable2<T> {
     /**
      * Start setting value on immutable object  
      * @param val Method changing value
-     */
-    public set(val?: (T) => void): IImmutableProperty<T> {
+     */    
+    public set(val: (data: T) => void): T;
+    public set(): IImmutableProperty<T>;
+    public set(val?: (data: T) => void): T | IImmutableProperty<T> {
         this._pendingSet = true;
 
-        this.t = Immutable2._shallowClone(this.t);
-        console.log("clone root");
+        this.data = this.cloneStrategy.clone(this.data);
 
         if (val) {
-            val(this.t);
+            // Set value directly
+            val(this.data);
 
             this._completeSet();
-        } else {
-            return Immutable2._makeProp(this.t, (complete: (T) => void) => {
-                if (complete) {
-                    complete(this.t);
-                }
-            }, () => {
-                this._completeSet();
-            });
-        }
-    }
 
-    private static _shallowClone<T>(t: T): T {
-        /*
-                let clone: T = <T>{};
-        
-                for (let key of Object.keys(t)) {
-                    if (typeof key === "string"
-                        || typeof key === "number") {
-                        clone[key] = t[key];
-                    } else {
-                        if (t[key].clone) {
-                            clone[key] = t[key].clone();
-                        } else {
-                            clone[key] = t[key];
-                        }
-                    }            
-                }
-                
-                return clone;
-        */
-        // TODO: Allow cloning complex objects?
-        return (<any>Object).assign({}, t);
+            return this.data;
+        } else {
+            return this._makeProp(
+                this.data,
+                (complete: (T) => void) => {
+                    if (complete) {
+                        complete(this.data);
+                    }
+                });
+        }
     }
 
     private _checkPendingOperation() {
@@ -223,5 +144,9 @@ export class Immutable2<T> {
 
     private _completeSet() {
         this._pendingSet = false;
+
+        if (debug) {
+            Object.freeze(this.data);
+        }
     }
 }

@@ -3,58 +3,25 @@
 import "mocha";
 import { expect } from "chai";
 
-import { Immutable, ImmutableArray, IA, IB, IC, IImmutableProperty, Immutable2 } from "./immutable";
+import { ImmutableArray, IImmutableProperty, Immutable, IImmutableCloneStrategy } from "./immutable";
 
-interface IFolder {
-    id: string;
-
-    foo(): string;
+export interface IA {
+    b: IB;
+    b2: IB;
+    foo: string;
 }
 
-class Folder extends Immutable<Folder> implements IFolder {
-    constructor(id: string) {
-        super(() => {
-            this.id = id;
-        });
-    }
-
-    public id: string;
-
-    public foo(): string {
-        return this.id + "foo";
-    }
-
-    protected _clone(): Folder {
-        return new Folder(this.id);
-    }
+export interface IB {
+    c: IC;
+    ar: number[];
 }
 
-interface IRepository {
-    id: string;
-    specialFolder: IFolder;
-
-    folders: ImmutableArray<IFolder>;
+export interface IC {
+    name: string;
+    id: number;
 }
 
-class Repository extends Immutable<Repository> implements IRepository {
-    constructor(id: string, specialFolder: Folder, folders: ImmutableArray<Folder>) {
-        super(() => {
-            this.id = id;
-            this.specialFolder = specialFolder;
-            this.folders = folders;
-        });
-    }
-
-    public id: string;
-    public specialFolder: Folder;
-    public folders: ImmutableArray<Folder>;
-
-    protected _clone(): Repository {
-        return new Repository(this.id, this.specialFolder, this.folders);
-    }
-}
-
-describe("lib", () => {
+describe("Immutable", () => {
     it("ts", () => {
         let a: IA = {
             b: {
@@ -74,21 +41,23 @@ describe("lib", () => {
             foo: "bar"
         };
 
-        var i = new Immutable2(a);
+        var i = new Immutable(a);
         let a1 = i.get();
-        let a11 = i.get();        
+        let a11 = i.get();
         expect(a1).to.be.eq(a11);
+        expect(() => a1.b = null).to.throws();
+        expect(a1.b).to.be.not.eq(null);
 
         i.set()(x => x.b)(x => x.c).val(x => x.name = "12");
         let a2 = i.get();
 
         expect(a1).to.be.not.eq(a2, "Root is cloned for change");
-        expect(a1.b).to.be.not.eq(a2.b, "Path is cloned for change");  
+        expect(a1.b).to.be.not.eq(a2.b, "Path is cloned for change");
         expect(a1.b.c).to.be.not.eq(a2.b.c, "Path is cloned for change");
         expect(a2.b.c.name).to.be.equal("12");
         expect(a2.b2).to.be.deep.equal(a1.b2, "Only changed paths are cloned");
-        
-        i.set()(x => x.b2).val(x => x.ar = [3,4]);
+
+        i.set()(x => x.b2).val(x => x.ar = [3, 4]);
         i.set(x => x.foo = "bar2");
         let a3 = i.get();
 
@@ -97,13 +66,52 @@ describe("lib", () => {
     });
 });
 
-describe("array", () => {
-    it("should copy for push", () => {
-        let a = new ImmutableArray<number>();
+// Test CloneStrategy
 
-        let a2 = a.push(1, 2);
+interface ICloneable<T> {
+    clone(): T;
+}
+
+class X {
+    constructor(public foo: number) { }
+}
+
+class Y implements ICloneable<Y> {
+    constructor(public bar: string) { }
+
+    public clone(): Y {
+        return new Y(this.bar);
+    }
+}
+
+class CustomCloneStrategy implements IImmutableCloneStrategy {
+    public clone<T>(source: X | ICloneable<T>): X | T {
+        if (source instanceof X) {
+            return new X(source.foo);
+        } else if (source.clone) {
+            return source.clone();
+        }
+
+        throw new Error("Type not supported");
+    }
+}
+
+describe("CustomCloneStrategy", () => {
+    it("is used", () => {
+        let a = new Immutable(new X(23), new CustomCloneStrategy());
+
+        a.set(x => x.foo = 42);
+        let a2 = a.get();
         expect(a).to.be.not.equal(a2);
-        expect(a.length).to.be.eq(0);
-        expect(a2.length).to.be.eq(2);
+        expect(a2.foo).to.be.equal(42); 
+    });
+
+    it("is used for multiple types", () => {
+        let a = new Immutable(new Y("23"), new CustomCloneStrategy());
+
+        a.set(x => x.bar = "42");
+        let a2 = a.get();
+        expect(a).to.be.not.equal(a2);
+        expect(a2.bar).to.be.equal("42"); 
     });
 });
