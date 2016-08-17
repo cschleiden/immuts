@@ -1,27 +1,28 @@
 /// <reference path="../typings/index.d.ts" />
 define(["require", "exports", "chai", "./immutable", "mocha"], function (require, exports, chai_1, immutable_1) {
     "use strict";
+    var a = {
+        b: {
+            c: {
+                id: 12,
+                name: "c"
+            },
+            ar: [1, 2]
+        },
+        b2: {
+            c: {
+                id: 23,
+                name: "c2"
+            },
+            ar: [2, 3]
+        },
+        foo: "bar"
+    };
     describe("Immutable", function () {
         it("ts", function () {
-            var a = {
-                b: {
-                    c: {
-                        id: 12,
-                        name: "c"
-                    },
-                    ar: [1, 2]
-                },
-                b2: {
-                    c: {
-                        id: 23,
-                        name: "c2"
-                    },
-                    ar: [2, 3]
-                },
-                foo: "bar"
-            };
             var i = new immutable_1.Immutable(a);
             var a1 = i.get();
+            chai_1.expect(a).to.be.eq(a1);
             var a11 = i.get();
             chai_1.expect(a1).to.be.eq(a11);
             chai_1.expect(function () { return a1.b = null; }).to.throws();
@@ -38,6 +39,19 @@ define(["require", "exports", "chai", "./immutable", "mocha"], function (require
             var a3 = i.get();
             chai_1.expect(a3.foo).to.be.equal("bar2");
             chai_1.expect(a3.b2.ar).to.be.not.equal(a2.b2.ar);
+        });
+        it("set multiple properties at once", function () {
+            var i = new immutable_1.Immutable(a);
+            var a1 = i.get();
+            var a2 = i.set()(function (x) { return x.b2; })(function (x) { return x.c; }).val(function (x) {
+                x.id = 11;
+                x.name = "12";
+            });
+            chai_1.expect(a1).to.be.not.eq(a2);
+            chai_1.expect(a1.b2.c.id).to.be.eq(23);
+            chai_1.expect(a1.b2.c.name).to.be.eq("c2");
+            chai_1.expect(a2.b2.c.id).to.be.eq(11);
+            chai_1.expect(a2.b2.c.name).to.be.eq("12");
         });
     });
     var X = (function () {

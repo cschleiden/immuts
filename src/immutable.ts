@@ -35,9 +35,9 @@ export interface IImmutableClone<T> {
     clone(): T;
 }
 
-export interface IImmutableProperty<T> {
-    <U>(x: (t: T) => U): IImmutableProperty<U>;
-    val(x: (t: T) => void): void;
+export interface IImmutableProperty<T, TParent> {
+    <U>(x: (t: T) => U): IImmutableProperty<U, TParent>;
+    val(x: (t: T) => void): TParent;
 }
 
 export class Immutable<T> {
@@ -72,8 +72,8 @@ export class Immutable<T> {
         return clone;
     }
 
-    private _makeProp<TParent, TValue>(parent: TParent, val: (TValue) => void): IImmutableProperty<TParent> {
-        let ip = (selector: (TParent) => TValue): IImmutableProperty<TValue> => {
+    private _makeProp<TParent, TValue>(parent: TParent, val: (TValue) => void): IImmutableProperty<TParent, T> {
+        let ip = (selector: (TParent) => TValue): IImmutableProperty<TValue, T> => {
             let clone = this._applySelector(parent, selector);
 
             return this._makeProp(
@@ -84,11 +84,12 @@ export class Immutable<T> {
                     }
 
                     this._completeSet();
+                    return this.data;
                 });
         };
         ip["val"] = val;
 
-        return <IImmutableProperty<TParent>>ip;
+        return <IImmutableProperty<TParent, T>>ip;
     }
 
     private static _findName<X, Y>(x: X, val: Y): string {
@@ -110,28 +111,31 @@ export class Immutable<T> {
     /**
      * Start setting value on immutable object  
      * @param val Method changing value
-     */    
+     */
     public set(val: (data: T) => void): T;
-    public set(): IImmutableProperty<T>;
-    public set(val?: (data: T) => void): T | IImmutableProperty<T> {
-        this._pendingSet = true;
+    public set(): IImmutableProperty<T, T>;
+    public set(val?: (data: T) => void): T | IImmutableProperty<T, T> {
+        this._checkPendingOperation();
 
+        // Clone root
         this.data = this.cloneStrategy.clone(this.data);
 
         if (val) {
             // Set value directly
             val(this.data);
 
-            this._completeSet();
-
             return this.data;
         } else {
+            this._pendingSet = true;
+
             return this._makeProp(
                 this.data,
                 (complete: (T) => void) => {
                     if (complete) {
                         complete(this.data);
                     }
+
+                    return this.data;
                 });
         }
     }

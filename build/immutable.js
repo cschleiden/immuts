@@ -66,6 +66,7 @@ define(["require", "exports", "./common", "./strategies/clone"], function (requi
                         complete(clone);
                     }
                     _this._completeSet();
+                    return _this.data;
                 });
             };
             ip["val"] = val;
@@ -86,19 +87,21 @@ define(["require", "exports", "./common", "./strategies/clone"], function (requi
         };
         Immutable.prototype.set = function (val) {
             var _this = this;
-            this._pendingSet = true;
+            this._checkPendingOperation();
+            // Clone root
             this.data = this.cloneStrategy.clone(this.data);
             if (val) {
                 // Set value directly
                 val(this.data);
-                this._completeSet();
                 return this.data;
             }
             else {
+                this._pendingSet = true;
                 return this._makeProp(this.data, function (complete) {
                     if (complete) {
                         complete(_this.data);
                     }
+                    return _this.data;
                 });
             }
         };

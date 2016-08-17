@@ -21,28 +21,30 @@ export interface IC {
     id: number;
 }
 
+const a: IA = {
+    b: {
+        c: {
+            id: 12,
+            name: "c"
+        },
+        ar: [1, 2]
+    },
+    b2: {
+        c: {
+            id: 23,
+            name: "c2"
+        },
+        ar: [2, 3]
+    },
+    foo: "bar"
+};
+
 describe("Immutable", () => {
     it("ts", () => {
-        let a: IA = {
-            b: {
-                c: {
-                    id: 12,
-                    name: "c"
-                },
-                ar: [1, 2]
-            },
-            b2: {
-                c: {
-                    id: 23,
-                    name: "c2"
-                },
-                ar: [2, 3]
-            },
-            foo: "bar"
-        };
-
         var i = new Immutable(a);
         let a1 = i.get();
+        expect(a).to.be.eq(a1);
+
         let a11 = i.get();
         expect(a1).to.be.eq(a11);
         expect(() => a1.b = null).to.throws();
@@ -63,6 +65,23 @@ describe("Immutable", () => {
 
         expect(a3.foo).to.be.equal("bar2");
         expect(a3.b2.ar).to.be.not.equal(a2.b2.ar);
+    });
+
+    it("set multiple properties at once", () => {
+        var i = new Immutable(a);
+
+        let a1 = i.get();
+        let a2 = i.set()(x => x.b2)(x => x.c).val(x => {
+            x.id = 11;
+            x.name = "12";
+        });
+
+        expect(a1).to.be.not.eq(a2);
+        expect(a1.b2.c.id).to.be.eq(23);
+        expect(a1.b2.c.name).to.be.eq("c2");
+        
+        expect(a2.b2.c.id).to.be.eq(11);
+        expect(a2.b2.c.name).to.be.eq("12");
     });
 });
 
@@ -103,7 +122,7 @@ describe("CustomCloneStrategy", () => {
         a.set(x => x.foo = 42);
         let a2 = a.get();
         expect(a).to.be.not.equal(a2);
-        expect(a2.foo).to.be.equal(42); 
+        expect(a2.foo).to.be.equal(42);
     });
 
     it("is used for multiple types", () => {
@@ -112,6 +131,6 @@ describe("CustomCloneStrategy", () => {
         a.set(x => x.bar = "42");
         let a2 = a.get();
         expect(a).to.be.not.equal(a2);
-        expect(a2.bar).to.be.equal("42"); 
+        expect(a2.bar).to.be.equal("42");
     });
 });
