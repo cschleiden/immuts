@@ -152,6 +152,6 @@ will fail. For a call like `i.set(x => a1)` the `"a1"` name cannot be reliably i
 
 ## TODO
 
-- Maybe use `immutable-js` for internal storage
+- Maybe use `immutable-js` for internal storage, only extract the property names and defer actual update to something like `updateIn(['a', 'b', 'c'], x => "12")`
 - Provide example(s) and tests for arrays
 - lots more :)  
