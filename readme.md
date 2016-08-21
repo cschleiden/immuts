@@ -99,6 +99,10 @@ let a2 = a.set(x => x.bar = 42);
 for more complex, and richer object hierarchies something like this can also be done: 
 
 ```TypeScript
+interface ICloneable<T> {
+    clone(): T;
+}
+
 class Y implements ICloneable<Y> {
     constructor(public bar: string) { }
 
