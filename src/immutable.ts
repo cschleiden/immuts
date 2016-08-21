@@ -1,9 +1,10 @@
 /// <reference path="../typings/index.d.ts" />
 
-import { debug } from "./common";
+import { debug, isPlainObject } from "./common";
 import { IImmutableCloneStrategy, DefaultCloneStrategy } from "./strategies/clone";
 
 export type IImmutableCloneStrategy = IImmutableCloneStrategy;
+
 export class ImmutableArray<T> {
     constructor(private _t: T[] = []) {
     }
@@ -37,7 +38,7 @@ export interface IImmutableClone<T> {
 
 export interface IImmutableProperty<T, TParent> {
     <U>(x: (t: T) => U): IImmutableProperty<U, TParent>;
-    val(x: (t: T) => void): TParent;
+    set(x: (t: T) => void): TParent;
 }
 
 export class Immutable<T> {
@@ -60,8 +61,6 @@ export class Immutable<T> {
     private _applySelector<TParent, TValue>(parent: TParent, selector: (TParent) => TValue): TValue {
         let result = selector(parent);
 
-        // TODO: Check result is object/array
-
         // Find name
         let propertyName = Immutable._findName(parent, result);
 
@@ -72,7 +71,7 @@ export class Immutable<T> {
         return clone;
     }
 
-    private _makeProp<TParent, TValue>(parent: TParent, val: (TValue) => void): IImmutableProperty<TParent, T> {
+    private _makeProp<TParent, TValue>(parent: TParent, set: (t: TValue) => T): IImmutableProperty<TParent, T> {
         let ip = (selector: (TParent) => TValue): IImmutableProperty<TValue, T> => {
             let clone = this._applySelector(parent, selector);
 
@@ -87,7 +86,7 @@ export class Immutable<T> {
                     return this.data;
                 });
         };
-        ip["val"] = val;
+        (<any>ip).set = set;
 
         return <IImmutableProperty<TParent, T>>ip;
     }
@@ -102,6 +101,11 @@ export class Immutable<T> {
                 }
 
                 name = key;
+
+                if (!debug) {
+                    // Stop at first matching object
+                    break;
+                }
             }
         }
 
@@ -110,34 +114,43 @@ export class Immutable<T> {
 
     /**
      * Start setting value on immutable object  
-     * @param val Method changing value
+     * @param selector Method returning value to set
      */
-    public set(val: (data: T) => void): T;
-    public set(): IImmutableProperty<T, T>;
-    public set(val?: (data: T) => void): T | IImmutableProperty<T, T> {
+    public select<TValue>(selector: (t: T) => TValue): IImmutableProperty<TValue, T> {
+        this._checkPendingOperation();
+
+        // Clone root
+        this.data = this.cloneStrategy.clone(this.data);
+        this._pendingSet = true;
+
+        let clone = this._applySelector(this.data, selector);
+
+        return this._makeProp(
+            clone,
+            (complete: (T) => void) => {
+                if (complete) {
+                    complete(clone);
+                }
+
+                this._completeSet();
+                return this.data;
+            });
+    }
+
+    /** 
+     * Set value
+     * @param set  
+     */
+    public set(set: (data: T) => void): T {
         this._checkPendingOperation();
 
         // Clone root
         this.data = this.cloneStrategy.clone(this.data);
 
-        if (val) {
-            // Set value directly
-            val(this.data);
+        // Set value directly
+        set(this.data);
 
-            return this.data;
-        } else {
-            this._pendingSet = true;
-
-            return this._makeProp(
-                this.data,
-                (complete: (T) => void) => {
-                    if (complete) {
-                        complete(this.data);
-                    }
-
-                    return this.data;
-                });
-        }
+        return this.data;
     }
 
     private _checkPendingOperation() {
@@ -150,6 +163,7 @@ export class Immutable<T> {
         this._pendingSet = false;
 
         if (debug) {
+            // Ensure object cannot be modified
             Object.freeze(this.data);
         }
     }

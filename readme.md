@@ -41,23 +41,32 @@ interface IB {
     a2: IA;
 }
 
-let i = new Immutable<IB>({
-        a1: {  
-            id: 42,
-            name: "foo"
-        }, 
-        a2: {
-            id: 23,
-            name: "bar"
+interface IC {
+    b: IB;
+}
+
+let i = new Immutable<IC>({
+        b: {
+            a1: {  
+                id: 42,
+                name: "foo"
+            }, 
+            a2: {
+                id: 23,
+                name: "bar"
+            }
         }
     });
 
-let b = i.get();
-let b2 = i.set()(x => x.a1).val(x => x.id = 12);
+let c = i.get();
+let c2 = i.select(x => x.b)(x => x.a1).set(x => x.id = 12);
+let c3 = i.get();
 
-// b !== b2 => true
-// b.a2 === b2.a2 => true
-// b.a1 !== b2.a1 => true
+// c !== c2 => true
+// c2 === c3 => true
+
+// c.b.a2 === c2.b.a2 => true
+// c.b.a1 !== c2.b.a1 => true
 ```
 
 ### Complex Types
@@ -131,7 +140,7 @@ let b = {
 }
 ```
 
-will fail. For a call like `i.set()(x => a1)` the `"a1"` name cannot be reliably identified, because `a1` and `a2` point to the same value. A feature like `nameof` in C# would solve a lot of these problems.
+will fail. For a call like `i.set(x => a1)` the `"a1"` name cannot be reliably identified, because `a1` and `a2` point to the same value. A feature like `nameof` in C# would solve a lot of these problems.
 
 ## Outlook
 

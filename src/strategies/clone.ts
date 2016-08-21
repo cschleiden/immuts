@@ -1,4 +1,4 @@
-import { debug } from "../common";
+import { debug, isPlainObject } from "../common";
 
 export interface IImmutableCloneStrategy {
     clone<T>(source: T): T;
@@ -9,16 +9,9 @@ export class DefaultCloneStrategy implements IImmutableCloneStrategy {
             return DefaultCloneStrategy._shallowClone(source);
         }
 
-        private static _isPlainObject<T>(source: T) {
-            return !!source
-                && !Array.isArray(source)
-                && source === Object(source)
-                && source.constructor === Object;
-        }
-
         private static _shallowClone<T>(t: T): T {
             if (debug) {
-                if (!DefaultCloneStrategy._isPlainObject(t)) {
+                if (!isPlainObject(t)) {
                     throw new Error("Can only clone plain objects");
                 }
             }
