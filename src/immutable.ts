@@ -1,36 +1,7 @@
 /// <reference path="../typings/index.d.ts" />
 
-import { debug, isPlainObject } from "./common";
+import { isPlainObject } from "./common";
 import { IImmutableCloneStrategy, DefaultCloneStrategy } from "./strategies/clone";
-
-export type IImmutableCloneStrategy = IImmutableCloneStrategy;
-
-export class ImmutableArray<T> {
-    constructor(private _t: T[] = []) {
-    }
-
-    public push(...t: T[]): ImmutableArray<T> {
-        return new ImmutableArray<T>(this._t.concat(...t));
-    }
-
-    public get length(): number {
-        return this._t.length;
-    }
-
-    public toArray(): T[] {
-        return this._t.slice(0);
-    }
-
-    public get(idx: number): T {
-        return this._t[idx];
-    }
-
-    public set(idx: number, t: T): ImmutableArray<T> {
-        let clone = this._t.slice(0);
-        clone.splice(idx, 1, t);
-        return new ImmutableArray<T>(clone);
-    }
-}
 
 export interface IImmutableClone<T> {
     clone(): T;
@@ -44,7 +15,7 @@ export interface IImmutableProperty<T, TParent> {
 export class Immutable<T> {
     //#if DEBUG
     private _pendingSet: boolean;
-    //#endif    
+    //#endif
 
     constructor(
         private data: T,
@@ -102,10 +73,10 @@ export class Immutable<T> {
 
                 name = key;
 
-                if (!debug) {
-                    // Stop at first matching object
-                    break;
-                }
+                /// #if !DEBUG
+                // Stop at first matching Object
+                break;
+                /// #endif
             }
         }
 
@@ -113,7 +84,7 @@ export class Immutable<T> {
     }
 
     /**
-     * Start setting value on immutable object  
+     * Start setting value on immutable object
      * @param selector Method returning value to set
      */
     public select<TValue>(selector: (t: T) => TValue): IImmutableProperty<TValue, T> {
@@ -137,9 +108,9 @@ export class Immutable<T> {
             });
     }
 
-    /** 
+    /**
      * Set value
-     * @param set  
+     * @param set
      */
     public set(set: (data: T) => void): T {
         this._checkPendingOperation();
@@ -162,9 +133,9 @@ export class Immutable<T> {
     private _completeSet() {
         this._pendingSet = false;
 
-        if (debug) {
-            // Ensure object cannot be modified
-            Object.freeze(this.data);
-        }
+        /// #if DEBUG
+        // Ensure object cannot be modified
+        Object.freeze(this.data);
+        /// #endif
     }
 }

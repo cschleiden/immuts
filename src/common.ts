@@ -1,5 +1,3 @@
-export var debug: boolean = true;
-
 // Polyfill Object.Assign for Internet Explorer
 if (typeof Object["assign"] != 'function') {
     Object["assign"] = function (target) {
@@ -23,6 +21,7 @@ if (typeof Object["assign"] != 'function') {
     };
 }
 
+/** @internal*/
 export function isPlainObject<T>(source: T) {
     return !!source
         && !Array.isArray(source)
