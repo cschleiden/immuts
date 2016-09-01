@@ -1,13 +1,14 @@
 {
   "name": "immu-ts",
-  "version": "1.0.0",
+  "version": "0.0.4",
   "description": "",
-  "main": "dist/immuts.js",
+  "main": "dist/immuts.min.js",
   "typings": "dist/immuts.d.ts",
   "scripts": {
+    "prepublish": "npm run clean && npm run build",
     "test": "npm run clean && tsc && karma start --single-run",
     "build": "webpack --debug && webpack -p && dts-bundle --name immuts --main build/main.d.ts --outputAsModuleFolder --out ../dist/immuts.d.ts",
-    "clean": "rimraf build dist"
+    "clean": "rimraf build && rimraf dist"
   },
   "author": "cschleiden",
   "license": "MIT",
