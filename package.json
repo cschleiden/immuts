@@ -5,7 +5,7 @@
   "main": "dist/immuts.js",
   "typings": "dist/immuts.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run clean && tsc && karma start --single-run",
     "build": "webpack --debug && webpack -p && dts-bundle --name immuts --main build/main.d.ts --outputAsModuleFolder --out ../dist/immuts.d.ts",
     "clean": "rimraf build dist"
   },

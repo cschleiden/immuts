@@ -3,9 +3,10 @@
         "module": "amd",
         "target": "es5",
         "outDir": "build",
-        "declaration": true
+        "declaration": true        
     },
-    "files": [
-        "src/main.ts"
+    "exclude": [
+        "node_modules",
+        "build"
     ]
 }

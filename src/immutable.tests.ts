@@ -3,7 +3,8 @@
 import "mocha";
 import { expect } from "chai";
 
-import { ImmutableArray, IImmutableProperty, Immutable, IImmutableCloneStrategy } from "./immutable";
+import { IImmutableProperty, Immutable } from "./immutable";
+import { IImmutableCloneStrategy } from "./strategies/clone";
 
 export interface IA {
     b: IB;
