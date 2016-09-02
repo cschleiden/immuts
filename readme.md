@@ -1,11 +1,11 @@
-## Work in Progress!
-
-Title
+immuts
 =====
 
-Initial attempt at providing a type-safe, generic immutable datastructure for Typescript.  
+Type-safe, generic immutable datastructure for Typescript. Can be used as thin wrapper over `immutablejs` (or similar libraries) or on its own. 
 
 ## Motivation
+
+tbd
 
 ## Usage 
 
@@ -90,7 +90,7 @@ class CustomCloneStrategy implements IImmutableCloneStrategy {
     }
 }
 
-let a = new Immutable(new X(23), new DefaultImmutableBackend(new CustomCloneStrategy());
+let a = new Immutable(new X(23), new DefaultImmutableBackend<X>(new CustomCloneStrategy());
 let a2 = a.set(x => x.bar = 42);
 
 // a !== a2 => true
@@ -121,7 +121,7 @@ class CustomCloneStrategy implements IImmutableCloneStrategy {
     }
 }
 
-let a = new Immutable(new Y("23"), new CustomCloneStrategy());
+let a = new Immutable(new Y("23"), new DefaultImmutableBackend<Y>(new CustomCloneStrategy()));
 let a2 = a.set(x => x.bar = "42");
 
 // a !== a2 => true
@@ -162,12 +162,32 @@ export class ImmutableJsBackendAdapter<T> implements IImmutableBackend<T> {
 }
 ```
 
-## Outlook
+## Limitations
 
+To build up the property path (`i.set(x => x.a.b.c)` needs to be captured into `["a", "b", "c"]`) the library relies on the ES6 [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) object. In browsers where this is not suppored (mainly all versions of Internet Explorer) a fallback is used using `Object.defineProperty`. 
+
+This method does not deal correctly with optional properties, so something like this:
+
+```TypeScript
+interface IA {    
+    foo?: string;
+    bar: number;
+}
+
+let i = new Immutable<IA>({
+    // foo: "test", - leave undefined! 
+    bar: 42
+});
+
+i.set(x => x.foo = "test2");
+```
+
+would fail because `foo` did not exist at the time of creation. If you don't target Internet Explorer this will not be an issue and everything should work just fine.
+
+## Outlook
 
 
 ## TODO
 
-- Maybe use `immutable-js` for internal storage, only extract the property names and defer actual update to something like `updateIn(['a', 'b', 'c'], x => "12")`
 - Provide example(s) and tests for arrays
 - lots more :)  
