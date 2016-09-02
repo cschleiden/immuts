@@ -30,6 +30,8 @@ let a2 = i.set(x => x.id = 23);
 
 ### Nested  
 
+The integration is most valuable when used with a nested object: 
+
 ```TypeScript
 interface IA {
     id: number;
@@ -68,6 +70,14 @@ let c3 = i.get();
 // c.b.a2 === c2.b.a2 => true
 // c.b.a1 !== c2.b.a1 => true
 ```
+
+when you execute this:
+
+```TypeScript
+let c2 = i.set(x => x.b.a1.id = 12);
+```
+
+the root, `b`, and `a1` will be automatically cloned, before the new `id` is assigned to a1. 
 
 ### Complex Types
 
@@ -189,5 +199,6 @@ would fail because `foo` did not exist at the time of creation. If you don't tar
 
 ## TODO
 
-- Provide example(s) and tests for arrays
+- provide example(s) and tests for arrays
+- benchmarks
 - lots more :)  
