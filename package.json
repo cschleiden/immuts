@@ -1,6 +1,6 @@
 {
   "name": "immu-ts",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "main": "dist/immuts.min.js",
   "typings": "dist/immuts.d.ts",
@@ -16,6 +16,7 @@
     "chai": "^3.5.0",
     "dts-bundle": "^0.5.0",
     "ifdef-loader": "^1.0.2",
+    "immutable": "^3.8.1",
     "karma": "^1.1.2",
     "karma-chai": "^0.1.0",
     "karma-chrome-launcher": "^1.0.1",
