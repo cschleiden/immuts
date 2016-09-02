@@ -7,6 +7,8 @@ import { ImmutableProxy } from "./proxy";
 
 
 export class Immutable<T> {
+    private _proxy: ImmutableProxy<T>;
+
     /**
      * Create new immutable object by wrapping data
      * @param data Object to wrap
@@ -16,6 +18,8 @@ export class Immutable<T> {
         data: T,
         private backend: IImmutableBackend<T> = new DefaultImmutableBackend<T>()) {
         this.backend.init(data);
+
+        this._createProxy();
     }
 
     /** Get the current value of the wrapped object */
@@ -24,25 +28,19 @@ export class Immutable<T> {
     }
 
     public set(set: (data: T) => void): T {
-        let proxy = new ImmutableProxy<T>(this.backend.get(), (key: string, value: any) => {
-            this.backend.set(proxy.propertiesAccessed, key, value);
-        });
-
         this._beforeSet();
 
-        set(proxy.get());
+        set(this._proxy.get());
 
         return this.backend.get();
     }
 
     public update<U>(set: (data: T) => U, update: (target: U) => void) {
-        let proxy = new ImmutableProxy<T>(this.backend.get(), (name: string, value: any) => { });
-
         this._beforeSet();
 
-        set(proxy.get());
+        set(this._proxy.get());
 
-        this.backend.update(proxy.propertiesAccessed, update);
+        this.backend.update(this._proxy.propertiesAccessed, update);
 
         return this.backend.get();
     }
@@ -50,6 +48,14 @@ export class Immutable<T> {
     private _beforeSet() {
         if (this.backend.beforeSet) {
             this.backend.beforeSet();
+        }
+    }
+
+    private _createProxy(): void {
+        if (!this._proxy) {
+            this._proxy = new ImmutableProxy<T>(this.backend.get(), (key: string, value: any) => {
+                this.backend.set(this._proxy.propertiesAccessed, key, value);
+            });
         }
     }
 }

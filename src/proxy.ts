@@ -22,10 +22,10 @@ class LegacyProxy<T> {
     private _proxyCache = {};
 
     constructor(source: T, private _get: (name: string) => void, private _done: (name: string, value: any) => void) {
-        this._makeProxy(this, source);
+        this._makeProxy(this, source, "root");
     }
 
-    private _makeProxy<U, W>(target: U, source: W, key: string = null) {
+    private _makeProxy<U, W>(target: U, source: W, key: string) {
         if (key) {
             if (this._proxyCache[key]) {
                 return this._proxyCache[key];
@@ -59,8 +59,11 @@ export class ImmutableProxy<T> {
 
     public propertiesAccessed: string[] = [];
 
-
-    constructor(private _t: T, private _done: (name: string, value: any) => void) {
+    /**
+     * @param _source Source object, will be used then creating legacy proxy to enumerate propertiesAccessed
+     * @param _done Callback when a 'set' operation is called on proxy
+     */
+    constructor(private _source: T, private _done: (name: string, value: any) => void) {
         if (proxySupported) {
             this._p = new Proxy(
                 {},
@@ -77,13 +80,16 @@ export class ImmutableProxy<T> {
                     }
                 });
         } else {
-            this._p = new LegacyProxy<T>(this._t, (name: string) => {
+            this._p = new LegacyProxy<T>(this._source, (name: string) => {
                 this.propertiesAccessed.push(name);
             }, this._done);
         }
     }
 
     public get(): T {
+        // Reset path
+        this.propertiesAccessed = [];
+
         return <any>this._p;
     }
 }
