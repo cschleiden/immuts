@@ -16,7 +16,8 @@ module.exports = function (config) {
     // list of files / patterns to load in the browser
     files: [
       { pattern: 'build/**/*.js', included: false },
-      'test-main.js'
+      'test-main.js',
+      'node_modules/proxy-polyfill/proxy.min.js'
     ],
 
 
@@ -57,6 +58,7 @@ module.exports = function (config) {
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
     browsers: ['PhantomJS'],
+    //browsers: ['Chrome'],
 
 
     // Continuous Integration mode

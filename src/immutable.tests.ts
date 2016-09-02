@@ -51,7 +51,7 @@ describe("Immutable", () => {
         expect(() => a1.b = null).to.throws();
         expect(a1.b).to.be.not.eq(null);
 
-        i.select(x => x.b)(x => x.c).set(x => x.name = "12");
+        i.set(x => x.b.c.name = "12");
         let a2 = i.get();
 
         expect(a1).to.be.not.eq(a2, "Root is cloned for change");
@@ -60,12 +60,14 @@ describe("Immutable", () => {
         expect(a2.b.c.name).to.be.equal("12");
         expect(a2.b2).to.be.deep.equal(a1.b2, "Only changed paths are cloned");
 
-        i.select(x => x.b2).set(x => x.ar = [3, 4]);
+        i.set(x => x.b2.ar = [3, 4]);
         i.set(x => x.foo = "bar2");
         let a3 = i.get();
 
         expect(a3.foo).to.be.equal("bar2");
         expect(a3.b2.ar).to.be.not.equal(a2.b2.ar);
+
+        let t = i.set(x => x.b.c.name = "bar3");
     });
 
     it("modify root", () => {
@@ -79,7 +81,7 @@ describe("Immutable", () => {
         var i = new Immutable(a);
 
         let a1 = i.get();
-        let a2 = i.select(x => x.b2)(x => x.c).set(x => {
+        let a2 = i.update(x => x.b2.c, x => {
             x.id = 11;
             x.name = "12";
         });

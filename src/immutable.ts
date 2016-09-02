@@ -2,6 +2,7 @@
 
 import { isPlainObject } from "./common";
 import { IImmutableCloneStrategy, DefaultCloneStrategy } from "./strategies/clone";
+import { ImmutableProxy } from "./proxy";
 
 export interface IImmutableClone<T> {
     clone(): T;
@@ -18,6 +19,25 @@ export interface IImmutableProperty<T, TParent> {
      */
     set(x: (t: T) => void): TParent;
 }
+/*
+function buildProxy<T>(x: T, get: Function, set: Function) {
+    var proxy = {};
+
+    for (var property in x) {
+        if (x.hasOwnProperty(property)) {
+            Object.defineProperty(proxy, property, {
+                get: () => {
+                    get(property);
+                },
+                set: () => {
+                    set(property);
+                }
+            })
+        }
+    }
+}
+*/
+
 
 export class Immutable<T> {
     //#if DEBUG
@@ -46,109 +66,60 @@ export class Immutable<T> {
         return this.data;
     }
 
-    /**
-     * Start setting value on wrapped object
-     * @param selector Method returning value to set
-     */
-    public select<TValue>(selector: (t: T) => TValue): IImmutableProperty<TValue, T> {
-        /// #if DEBUG
-        this._checkPendingOperation();
-        /// #endif
-
-        // Clone root
-        this.data = this.cloneStrategy.clone(this.data);
-        this._pendingSet = true;
-
-        let clone = this._applySelector(this.data, selector);
-
-        return this._makeProp(
-            clone,
-            (complete: (T) => void) => {
-                if (complete) {
-                    complete(clone);
-                }
-
-                /// #if DEBUG
-                this._completeSet();
-                /// #endif
-
-                return this.data;
-            });
-    }
-
-    /**
-     * Set value on wrapped object
-     * @param set Function to set value
-     * @return Wrapped object after setting data
-     */
     public set(set: (data: T) => void): T {
         /// #if DEBUG
         this._checkPendingOperation();
         /// #endif
 
-        // Clone root
-        this.data = this.cloneStrategy.clone(this.data);
+        let proxy = new ImmutableProxy<T>(this.data, (name: string, value: any) => {
+            // Clone objects in path
+            let tail = this._applyPath(proxy.propertiesAccessed);
 
-        // Set value directly
-        set(this.data);
+            tail[name] = value;
+
+            /// #if DEBUG
+            this._completeSet();
+            /// #endif
+        });
+
+        set(proxy.get());
 
         return this.data;
     }
 
-    private _applySelector<TParent, TValue>(parent: TParent, selector: (TParent) => TValue): TValue {
-        let result = selector(parent);
+    public update<U>(set: (data: T) => U, update: (target: U) => void) {
+        /// #if DEBUG
+        this._checkPendingOperation();
+        /// #endif
 
-        // Find name
-        let propertyName = Immutable._findName(parent, result);
+        let proxy = new ImmutableProxy<T>(this.data, (name: string, value: any) => { });
 
-        // Clone current node
-        let clone = this.cloneStrategy.clone(result);
-        parent[propertyName] = clone;
+        set(proxy.get());
 
-        return clone;
+        let tail = this._applyPath(proxy.propertiesAccessed);
+
+        update(tail);
+
+        /// #if DEBUG
+        this._completeSet();
+        /// #endif
+
+        return this.data;
     }
 
-    private _makeProp<TParent, TValue>(parent: TParent, set: (t: TValue) => T): IImmutableProperty<TParent, T> {
-        let ip = (selector: (TParent) => TValue): IImmutableProperty<TValue, T> => {
-            let clone = this._applySelector(parent, selector);
+    private _applyPath<U>(keyPath: string[]): any {
+        // Clone root
+        this.data = this.cloneStrategy.clone(this.data);
 
-            return this._makeProp(
-                clone,
-                (complete: (TValue) => void) => {
-                    if (complete) {
-                        complete(clone);
-                    }
-
-                    /// #if DEBUG
-                    this._completeSet();
-                    /// #endif
-                    return this.data;
-                });
-        };
-        (<any>ip).set = set;
-
-        return <IImmutableProperty<TParent, T>>ip;
-    }
-
-    private static _findName<X, Y>(x: X, val: Y): string {
-        let name: string = null;
-
-        for (let key of Object.keys(x)) {
-            if (x[key] === val) {
-                if (name !== null) {
-                    throw new Error("Duplicate key found");
-                }
-
-                name = key;
-
-                /// #if !DEBUG
-                // Stop at first matching Object
-                break;
-                /// #endif
-            }
+        let tail = this.data;
+        for (let propertyName of keyPath) {
+            console.log(propertyName);
+            let propertyValueClone = this.cloneStrategy.clone(tail[propertyName]);
+            tail[propertyName] = propertyValueClone;
+            tail = propertyValueClone;
         }
 
-        return name;
+        return tail;
     }
 
     /// #if DEBUG
