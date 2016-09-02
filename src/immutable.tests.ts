@@ -3,7 +3,8 @@
 import "mocha";
 import { expect } from "chai";
 
-import { Immutable, DefaultImmutableBackend } from "./immutable";
+import { Immutable } from "./immutable";
+import { DefaultImmutableBackend, IImmutableBackend } from "./backends/backend";
 import { IImmutableCloneStrategy } from "./strategies/clone";
 
 export interface IA {
@@ -132,8 +133,7 @@ class CustomCloneStrategy implements IImmutableCloneStrategy {
 
 describe("CustomCloneStrategy", () => {
     it("is used", () => {
-        let data = new X(23);
-        let a = new Immutable(data, new DefaultImmutableBackend(data, new CustomCloneStrategy()));
+        let a = new Immutable<X>(new X(23), new DefaultImmutableBackend<X>(new CustomCloneStrategy()));
 
         a.set(x => x.foo = 42);
         let a2 = a.get();
@@ -142,8 +142,7 @@ describe("CustomCloneStrategy", () => {
     });
 
     it("is used for multiple types", () => {
-        let data = new Y("23");
-        let a = new Immutable(data, new DefaultImmutableBackend(data, new CustomCloneStrategy()));
+        let a = new Immutable(new Y("23"), new DefaultImmutableBackend<Y>(new CustomCloneStrategy()));
 
         a.set(x => x.bar = "42");
         let a2 = a.get();

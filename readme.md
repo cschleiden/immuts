@@ -59,7 +59,7 @@ let i = new Immutable<IC>({
     });
 
 let c = i.get();
-let c2 = i.select(x => x.b)(x => x.a1).set(x => x.id = 12);
+let c2 = i.set(x => x.b.a1.id = 12);
 let c3 = i.get();
 
 // c !== c2 => true
@@ -71,7 +71,7 @@ let c3 = i.get();
 
 ### Complex Types
 
-Plain JS objects can be easily cloned. When you have more complex objects, a custom `CloneStrategy` can be used:
+Plain JS objects can be easily cloned. When you have more complex objects, you can use a custom `CloneStrategy`:
 
 ```TypeScript
 class X {
@@ -90,13 +90,13 @@ class CustomCloneStrategy implements IImmutableCloneStrategy {
     }
 }
 
-let a = new Immutable(new X(23), new CustomCloneStrategy());
+let a = new Immutable(new X(23), new DefaultImmutableBackend(new CustomCloneStrategy());
 let a2 = a.set(x => x.bar = 42);
 
 // a !== a2 => true
 ```
 
-for more complex, and richer object hierarchies something like this can also be done: 
+Another example for more complex, richer object hierarchies: 
 
 ```TypeScript
 interface ICloneable<T> {
@@ -129,22 +129,38 @@ let a2 = a.set(x => x.bar = "42");
 // a2.bar === "42" => true
 ```
 
-## Limitations
+## Other backends
 
-Object values in nested scenario have to be unique, due to the lack of a reliable way of identifying property names in Typescript. Something like 
+You can build your own backend/adapter or use the provided one for `immutable-js`: 
+
+Usage: 
 
 ```TypeScript
-let a = {
-    id: 12
-};
-
-let b = {
-    a1: a,
-    a2: a
-}
+let a = new Immutable<IC>({ ... }, new ImmutableJsAdapterBackend<IC>());
 ```
 
-will fail. For a call like `i.set(x => a1)` the `"a1"` name cannot be reliably identified, because `a1` and `a2` point to the same value. A feature like `nameof` in C# would solve a lot of these problems.
+Code:
+```TypeScript
+export class ImmutableJsBackendAdapter<T> implements IImmutableBackend<T> {
+    private data: Immutable.Map<string, any>;
+
+    public init(data: T) {
+        this.data = Immutable.fromJS(data);
+    }
+
+    public set<U>(path: string[], key: string, value: U) {
+        this.data.setIn(path.concat([key]), value);
+    }
+
+    public update<U>(path: string[], update: (target: U) => void) {
+        this.data.updateIn(path, update);
+    }
+
+    public get(): T {
+        return this.data.toJS() as T;
+    }
+}
+```
 
 ## Outlook
 
