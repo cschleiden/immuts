@@ -4,60 +4,55 @@ import { isPlainObject } from "./common";
 import { IImmutableCloneStrategy, DefaultCloneStrategy } from "./strategies/clone";
 import { ImmutableProxy } from "./proxy";
 
-export interface IImmutableClone<T> {
-    clone(): T;
+export interface IImmutableBackend<T> {
+    set<U>(path: string[], key: string, value: U);
+
+    update<U>(path: string[], update: (target: U) => void);
+
+    get(): T;
+
+    beforeSet?();
 }
 
-export interface IImmutableProperty<T, TParent> {
-    /** Select child object */
-    <U>(x: (t: T) => U): IImmutableProperty<U, TParent>;
+export class DefaultImmutableBackend<T> implements IImmutableBackend<T> {
+    /// #if DEBUG
+    private _pendingSet: boolean = false;
+    /// #endif
 
-    /** 
-     * Set value
-     * @param x Function to set value
-     * @return Updated instance
-     */
-    set(x: (t: T) => void): TParent;
-}
-/*
-function buildProxy<T>(x: T, get: Function, set: Function) {
-    var proxy = {};
-
-    for (var property in x) {
-        if (x.hasOwnProperty(property)) {
-            Object.defineProperty(proxy, property, {
-                get: () => {
-                    get(property);
-                },
-                set: () => {
-                    set(property);
-                }
-            })
-        }
-    }
-}
-*/
-
-
-export class Immutable<T> {
-    //#if DEBUG
-    private _pendingSet: boolean;
-    //#endif
-
-    /**
-     * Create new immutable object by wrapping data
-     * @param data Object to wrap
-     * @param cloneStrategy Optional clone strategy to use when cloning objects
-     */
-    constructor(
-        private data: T,
-        private cloneStrategy: IImmutableCloneStrategy = new DefaultCloneStrategy()) {
+    constructor(private data: T, private cloneStrategy: IImmutableCloneStrategy = new DefaultCloneStrategy()) {
         /// #if DEBUG
         this._completeSet();
         /// #endif
     }
 
-    /** Get the current value of the wrapped object */
+    /// #if DEBUG
+    public beforeSet() {
+        this._checkPendingOperation();
+    
+        this._pendingSet = true;
+    }
+    /// #endif
+
+    public set<U>(path: string[], key: string, value: U) {
+        let tail = this._applyPath(path);
+        tail[key] = value;
+
+        /// #if DEBUG
+        this._completeSet();
+        /// #endif
+    }
+
+    public update<U>(path: string[], update: (target: U) => void) {
+        let tail = this._applyPath(path);
+
+        update(tail);
+
+        /// #if DEBUG
+        this._completeSet();
+        /// #endif
+
+    }
+
     public get(): T {
         /// #if DEBUG
         this._checkPendingOperation();
@@ -66,54 +61,12 @@ export class Immutable<T> {
         return this.data;
     }
 
-    public set(set: (data: T) => void): T {
-        /// #if DEBUG
-        this._checkPendingOperation();
-        /// #endif
-
-        let proxy = new ImmutableProxy<T>(this.data, (name: string, value: any) => {
-            // Clone objects in path
-            let tail = this._applyPath(proxy.propertiesAccessed);
-
-            tail[name] = value;
-
-            /// #if DEBUG
-            this._completeSet();
-            /// #endif
-        });
-
-        set(proxy.get());
-
-        return this.data;
-    }
-
-    public update<U>(set: (data: T) => U, update: (target: U) => void) {
-        /// #if DEBUG
-        this._checkPendingOperation();
-        /// #endif
-
-        let proxy = new ImmutableProxy<T>(this.data, (name: string, value: any) => { });
-
-        set(proxy.get());
-
-        let tail = this._applyPath(proxy.propertiesAccessed);
-
-        update(tail);
-
-        /// #if DEBUG
-        this._completeSet();
-        /// #endif
-
-        return this.data;
-    }
-
-    private _applyPath<U>(keyPath: string[]): any {
+    private _applyPath(keyPath: string[]): any {
         // Clone root
         this.data = this.cloneStrategy.clone(this.data);
 
-        let tail = this.data;
+        let tail: any = this.data;
         for (let propertyName of keyPath) {
-            console.log(propertyName);
             let propertyValueClone = this.cloneStrategy.clone(tail[propertyName]);
             tail[propertyName] = propertyValueClone;
             tail = propertyValueClone;
@@ -136,4 +89,55 @@ export class Immutable<T> {
         Object.freeze(this.data);
     }
     /// #endif
+}
+
+///export class ImmutableJsBackendAdapter<T> implements IImmutableBackend<T> {
+///
+///}
+
+export class Immutable<T> {
+    /**
+     * Create new immutable object by wrapping data
+     * @param data Object to wrap
+     * @param backend Optional backend
+     */
+    constructor(
+        data: T,
+        private backend: IImmutableBackend<T> = new DefaultImmutableBackend<T>(data)) {
+    }
+
+    /** Get the current value of the wrapped object */
+    public get(): T {
+        return this.backend.get();
+    }
+
+    public set(set: (data: T) => void): T {
+        let proxy = new ImmutableProxy<T>(this.backend.get(), (key: string, value: any) => {
+            this.backend.set(proxy.propertiesAccessed, key, value);
+        });
+
+        this._beforeSet();
+        
+        set(proxy.get());
+
+        return this.backend.get();
+    }
+
+    public update<U>(set: (data: T) => U, update: (target: U) => void) {
+        let proxy = new ImmutableProxy<T>(this.backend.get(), (name: string, value: any) => { });
+
+        this._beforeSet();
+
+        set(proxy.get());
+
+        this.backend.update(proxy.propertiesAccessed, update);
+
+        return this.backend.get();
+    }
+
+    private _beforeSet() {
+        if (this.backend.beforeSet) {
+            this.backend.beforeSet();
+        }
+    }
 }

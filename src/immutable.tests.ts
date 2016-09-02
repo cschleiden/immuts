@@ -3,7 +3,7 @@
 import "mocha";
 import { expect } from "chai";
 
-import { IImmutableProperty, Immutable } from "./immutable";
+import { Immutable, DefaultImmutableBackend } from "./immutable";
 import { IImmutableCloneStrategy } from "./strategies/clone";
 
 export interface IA {
@@ -89,9 +89,14 @@ describe("Immutable", () => {
         expect(a1).to.be.not.eq(a2);
         expect(a1.b2.c.id).to.be.eq(23);
         expect(a1.b2.c.name).to.be.eq("c2");
-        
+
         expect(a2.b2.c.id).to.be.eq(11);
         expect(a2.b2.c.name).to.be.eq("12");
+    });
+
+    it("incomplete set should throw", () => {
+        var i = new Immutable(a);
+        expect(() => i.set(x => x.b.c)).to.throws();
     });
 });
 
@@ -127,7 +132,8 @@ class CustomCloneStrategy implements IImmutableCloneStrategy {
 
 describe("CustomCloneStrategy", () => {
     it("is used", () => {
-        let a = new Immutable(new X(23), new CustomCloneStrategy());
+        let data = new X(23);
+        let a = new Immutable(data, new DefaultImmutableBackend(data, new CustomCloneStrategy()));
 
         a.set(x => x.foo = 42);
         let a2 = a.get();
@@ -136,7 +142,8 @@ describe("CustomCloneStrategy", () => {
     });
 
     it("is used for multiple types", () => {
-        let a = new Immutable(new Y("23"), new CustomCloneStrategy());
+        let data = new Y("23");
+        let a = new Immutable(data, new DefaultImmutableBackend(data, new CustomCloneStrategy()));
 
         a.set(x => x.bar = "42");
         let a2 = a.get();

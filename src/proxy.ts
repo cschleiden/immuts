@@ -21,8 +21,8 @@ try {
 class LegacyProxy<T> {
     private _proxyCache = {};
 
-    constructor(t: T, private _get: (name: string) => void, private _done: (name: string, value: any) => void) {
-        this._makeProxy(this, t);
+    constructor(source: T, private _get: (name: string) => void, private _done: (name: string, value: any) => void) {
+        this._makeProxy(this, source);
     }
 
     private _makeProxy<U, W>(target: U, source: W, key: string = null) {
@@ -37,13 +37,17 @@ class LegacyProxy<T> {
                 get: () => {
                     this._get(propertyName);
 
-                    return this._makeProxy({}, source[propertyName]);
+                    return this._makeProxy({}, source[propertyName], `${ key || "" }-${ propertyName }`);
                 },
                 set: (value) => {
                     this._done(propertyName, value);
                     return value;
                 }
             });
+        }
+
+        if (key) {
+            this._proxyCache[key] = target;
         }
 
         return target;
@@ -58,13 +62,10 @@ export class ImmutableProxy<T> {
 
     constructor(private _t: T, private _done: (name: string, value: any) => void) {
         if (proxySupported) {
-            console.log(window["Proxy"]);
-            console.log("pppp");
             this._p = new Proxy(
                 {},
                 {
                     get: (target: any, key: string) => {
-                        console.log("get" + key);
                         this.propertiesAccessed.push(key);
 
                         // Recursively return proxy

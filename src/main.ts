@@ -1,2 +1,2 @@
 export { IImmutableCloneStrategy } from "./strategies/clone";
-export { Immutable } from "./immutable";
+export { Immutable, DefaultImmutableBackend, IImmutableBackend } from "./immutable";
