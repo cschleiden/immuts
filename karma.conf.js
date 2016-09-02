@@ -16,8 +16,7 @@ module.exports = function (config) {
     // list of files / patterns to load in the browser
     files: [
       { pattern: 'build/**/*.js', included: false },
-      'test-main.js',
-      'node_modules/proxy-polyfill/proxy.min.js'
+      'test-main.js'
     ],
 
 
