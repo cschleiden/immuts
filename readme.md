@@ -26,6 +26,8 @@ let a = i.get();
 let a2 = i.set(x => x.id, 23);
 
 // a !== a2 => true
+
+let a3 = i.set(x => x.id, "23"); // Results in compiler error, string cannot be assigned to number 
 ```
 
 ### Nested  
@@ -77,7 +79,12 @@ when you execute this:
 let c2 = i.set(x => x.b.a1.id, 12);
 ```
 
-the root, `b`, and `a1` will be automatically cloned, before the new `id` is assigned to a1. 
+the root, `b`, and `a1` will be automatically cloned, before the new `id` is assigned to a1. And again, everything is type-safe, something like
+
+```TypeScript
+let c4 = i.set(x => x.b.a1.id, "12");
+``` 
+would result in a compiler error, because the types of `id` and `"12"` do not match. 
 
 ### Complex Types
 
