@@ -23,7 +23,7 @@ let i = new Immutable<IA>({
 });
 
 let a = i.get();
-let a2 = i.set(x => x.id = 23);
+let a2 = i.set(x => x.id, 23);
 
 // a !== a2 => true
 ```
@@ -61,7 +61,7 @@ let i = new Immutable<IC>({
     });
 
 let c = i.get();
-let c2 = i.set(x => x.b.a1.id = 12);
+let c2 = i.set(x => x.b.a1.id, 12);
 let c3 = i.get();
 
 // c !== c2 => true
@@ -74,7 +74,7 @@ let c3 = i.get();
 when you execute this:
 
 ```TypeScript
-let c2 = i.set(x => x.b.a1.id = 12);
+let c2 = i.set(x => x.b.a1.id, 12);
 ```
 
 the root, `b`, and `a1` will be automatically cloned, before the new `id` is assigned to a1. 
@@ -101,7 +101,7 @@ class CustomCloneStrategy implements IImmutableCloneStrategy {
 }
 
 let a = new Immutable(new X(23), new DefaultImmutableBackend<X>(new CustomCloneStrategy());
-let a2 = a.set(x => x.bar = 42);
+let a2 = a.set(x => x.bar, 42);
 
 // a !== a2 => true
 ```
@@ -132,11 +132,13 @@ class CustomCloneStrategy implements IImmutableCloneStrategy {
 }
 
 let a = new Immutable(new Y("23"), new DefaultImmutableBackend<Y>(new CustomCloneStrategy()));
-let a2 = a.set(x => x.bar = "42");
+let a2 = a.set(x => x.bar, "42");
+let a3 = a.update(x => x.bar, x => x + "3");
 
 // a !== a2 => true
 // a.bar === "23" => true
 // a2.bar === "42" => true
+// a3.bar === "423" => true
 ```
 
 ## Other backends
@@ -158,7 +160,7 @@ export class ImmutableJsBackendAdapter<T> implements IImmutableBackend<T> {
         this.data = Immutable.fromJS(data);
     }
 
-    public set<U>(path: string[], key: string, value: U) {
+    public set<U>(path: string[], value: U) {
         this.data.setIn(path.concat([key]), value);
     }
 
@@ -173,6 +175,8 @@ export class ImmutableJsBackendAdapter<T> implements IImmutableBackend<T> {
 ```
 
 ## Limitations
+
+### Internet Explorer and `undefined`
 
 To build up the property path (`i.set(x => x.a.b.c)` needs to be captured into `["a", "b", "c"]`) the library relies on the ES6 [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) object. In browsers where this is not suppored (mainly all versions of Internet Explorer) a fallback is used using `Object.defineProperty`. 
 
@@ -189,7 +193,7 @@ let i = new Immutable<IA>({
     bar: 42
 });
 
-i.set(x => x.foo = "test2");
+i.set(x => x.foo, "test2");
 ```
 
 would fail because `foo` did not exist at the time of creation. If you don't target Internet Explorer this will not be an issue and everything should work just fine.

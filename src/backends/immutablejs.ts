@@ -9,8 +9,8 @@ export class ImmutableJsBackendAdapter<T> implements IImmutableBackend<T> {
         this.data = Immutable.fromJS(data);
     }
 
-    public set<U>(path: string[], key: string, value: U) {
-        this.data.setIn(path.concat([key]), value);
+    public set<U>(path: string[], value: U) {
+        this.data.setIn(path, value);
     }
 
     public update<U>(path: string[], update: (target: U) => void) {

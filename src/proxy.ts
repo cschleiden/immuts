@@ -22,10 +22,23 @@ class LegacyProxy<T> {
     private _proxyCache = {};
 
     constructor(source: T, private _get: (name: string) => void, private _done: (name: string, value: any) => void) {
+        /// #ifdef DEBUG
+        if (!source) {
+            throw new Error("Source cannot be null");
+        }
+        /// #endif
+
         this._makeProxy(this, source, "root");
     }
 
     private _makeProxy<U, W>(target: U, source: W, key: string) {
+        /// #ifdef DEBUG
+        if (!source) {
+            throw new Error("Source cannot be null");
+        }
+        /// #endif
+
+
         if (key) {
             if (this._proxyCache[key]) {
                 return this._proxyCache[key];
@@ -37,7 +50,13 @@ class LegacyProxy<T> {
                 get: () => {
                     this._get(propertyName);
 
-                    return this._makeProxy({}, source[propertyName], `${ key || "" }-${ propertyName }`);
+                    let next = source[propertyName];
+                    if (typeof next !== "object") {
+                        // Might be end of the chain, to not progress further
+                        return null;
+                    }
+
+                    return this._makeProxy({}, next, `${ key || "" }-${ propertyName }`);
                 },
                 set: (value) => {
                     this._done(propertyName, value);

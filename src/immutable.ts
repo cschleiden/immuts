@@ -1,6 +1,5 @@
 /// <reference path="../typings/index.d.ts" />
 
-import { isPlainObject } from "./common";
 import { IImmutableCloneStrategy, DefaultCloneStrategy } from "./strategies/clone";
 import { IImmutableBackend, DefaultImmutableBackend } from "./backends/backend";
 import { ImmutableProxy } from "./proxy";
@@ -27,10 +26,12 @@ export class Immutable<T> {
         return this.backend.get();
     }
 
-    public set(set: (data: T) => void): T {
+    public set<U>(set: (data: T) => U, value: U): T {
         this._beforeSet();
-
         set(this._proxy.get());
+
+        this.backend.set(this._proxy.propertiesAccessed, value);
+
 
         return this.backend.get();
     }
@@ -54,7 +55,7 @@ export class Immutable<T> {
     private _createProxy(): void {
         if (!this._proxy) {
             this._proxy = new ImmutableProxy<T>(this.backend.get(), (key: string, value: any) => {
-                this.backend.set(this._proxy.propertiesAccessed, key, value);
+                throw new Error("You cannot set");
             });
         }
     }

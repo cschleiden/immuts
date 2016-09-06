@@ -20,11 +20,3 @@ if (typeof Object["assign"] != 'function') {
         return target;
     };
 }
-
-/** @internal*/
-export function isPlainObject<T>(source: T) {
-    return !!source
-        && !Array.isArray(source)
-        && source === Object(source)
-        && source.constructor === Object;
-}

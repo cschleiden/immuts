@@ -52,7 +52,7 @@ describe("Immutable", () => {
         expect(() => a1.b = null).to.throws();
         expect(a1.b).to.be.not.eq(null);
 
-        i.set(x => x.b.c.name = "12");
+        i.set(x => x.b.c.name, "12");
         let a2 = i.get();
 
         expect(a1).to.be.not.eq(a2, "Root is cloned for change");
@@ -61,20 +61,20 @@ describe("Immutable", () => {
         expect(a2.b.c.name).to.be.equal("12");
         expect(a2.b2).to.be.deep.equal(a1.b2, "Only changed paths are cloned");
 
-        i.set(x => x.b2.ar = [3, 4]);
-        i.set(x => x.foo = "bar2");
+        i.set(x => x.b2.ar, [3, 4]);
+        i.set(x => x.foo, "bar2");
         let a3 = i.get();
 
         expect(a3.foo).to.be.equal("bar2");
         expect(a3.b2.ar).to.be.not.equal(a2.b2.ar);
 
-        let t = i.set(x => x.b.c.name = "bar3");
+        let t = i.set(x => x.b.c.name, "bar3");
     });
 
     it("modify root", () => {
         var i = new Immutable(a);
 
-        let a1 = i.set(x => x.foo = "12");
+        let a1 = i.set(x => x.foo, "12");
         expect(a1.foo).to.be.equal("12");
     });
 
@@ -95,10 +95,28 @@ describe("Immutable", () => {
         expect(a2.b2.c.name).to.be.eq("12");
     });
 
-    it("incomplete set should throw", () => {
-        var i = new Immutable(a);
-        expect(() => i.set(x => x.b.c)).to.throws();
+    it("set complex value", () => {
+        var i = new Immutable({
+            foo: [1, 2]
+        });
+        let i1 = i.get();
+        let i2 = i.set(x => x.foo, i1.foo.concat([3]));
+        expect(i1).to.be.not.equal(i2);
+        expect(i1.foo).to.be.not.equal(i2.foo);
+        expect(i2.foo).to.be.deep.equal([1, 2, 3]);
     });
+
+    it("update native array", () => {
+        var i = new Immutable({
+            foo: [1, 2]
+        });
+
+        let i1 = i.get();
+        let i2 = i.update(x => x.foo, x => x.push(3));
+        expect(i1).to.be.not.equal(i2);
+        expect(i1.foo).to.be.not.equal(i2.foo);
+        expect(i2.foo).to.be.deep.equal([1, 2, 3]);
+    })
 });
 
 // Test CloneStrategy
@@ -135,7 +153,7 @@ describe("CustomCloneStrategy", () => {
     it("is used", () => {
         let a = new Immutable<X>(new X(23), new DefaultImmutableBackend<X>(new CustomCloneStrategy()));
 
-        a.set(x => x.foo = 42);
+        a.set(x => x.foo, 42);
         let a2 = a.get();
         expect(a).to.be.not.equal(a2);
         expect(a2.foo).to.be.equal(42);
@@ -144,7 +162,7 @@ describe("CustomCloneStrategy", () => {
     it("is used for multiple types", () => {
         let a = new Immutable(new Y("23"), new DefaultImmutableBackend<Y>(new CustomCloneStrategy()));
 
-        a.set(x => x.bar = "42");
+        a.set(x => x.bar, "42");
         let a2 = a.get();
         expect(a).to.be.not.equal(a2);
         expect(a2.bar).to.be.equal("42");

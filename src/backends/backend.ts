@@ -3,7 +3,7 @@ import { IImmutableCloneStrategy, DefaultCloneStrategy } from "../strategies/clo
 export interface IImmutableBackend<T> {
     init(data: T);
 
-    set<U>(path: string[], key: string, value: U);
+    set<U>(path: string[], value: U);
 
     update<U>(path: string[], update: (target: U) => void);
 
@@ -24,7 +24,7 @@ export class DefaultImmutableBackend<T> implements IImmutableBackend<T> {
 
     public init(data: T) {
         this.data = data;
-        
+
         /// #if DEBUG
         this._completeSet();
         /// #endif
@@ -38,9 +38,9 @@ export class DefaultImmutableBackend<T> implements IImmutableBackend<T> {
     }
     /// #endif
 
-    public set<U>(path: string[], key: string, value: U) {
-        let tail = this._applyPath(path);
-        tail[key] = value;
+    public set<U>(path: string[], value: U) {
+        let tail = this._applyPath(path.slice(0, path.length - 1));
+        tail[path[path.length - 1]] = value;
 
         /// #if DEBUG
         this._completeSet();

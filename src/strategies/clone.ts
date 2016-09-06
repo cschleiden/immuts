@@ -1,4 +1,17 @@
-import { isPlainObject } from "../common";
+import "../common";
+
+/** @internal*/
+function isPlainObject<T>(source: T): boolean {
+    return !!source
+        && !Array.isArray(source)
+        && source === Object(source)
+        && source.constructor === Object;
+}
+
+function isArray<T>(source: T): boolean {
+    return !!source 
+        && Array.isArray(source);
+}
 
 export interface IImmutableCloneStrategy {
     clone<T>(source: T): T;
@@ -9,10 +22,10 @@ export class DefaultCloneStrategy implements IImmutableCloneStrategy {
         return DefaultCloneStrategy._shallowClone(source);
     }
 
-    private static _shallowClone<T>(t: T): T {
+    private static _shallowClone<T>(source: T): T {
         /// #if DEBUG            
-        if (!isPlainObject(t)) {
-            throw new Error("Can only clone plain objects");
+        if (!isPlainObject(source) && !isArray(source)) {
+            throw new Error("Can only clone plain objects and arrays");
         }
         /// #endif
 
@@ -34,7 +47,11 @@ export class DefaultCloneStrategy implements IImmutableCloneStrategy {
                 
                 return clone;
         */
+        
+        if (isArray(source)) {
+            return (source as any).slice(0);
+        }
 
-        return (<any>Object).assign({}, t);
+        return (<any>Object).assign({}, source);
     }
 }
