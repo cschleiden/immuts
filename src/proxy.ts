@@ -22,7 +22,7 @@ class LegacyProxy<T> {
     private _proxyCache = {};
 
     constructor(source: T, private _get: (name: string) => void, private _done: (name: string, value: any) => void) {
-        /// #ifdef DEBUG
+        /// #if DEBUG
         if (!source) {
             throw new Error("Source cannot be null");
         }
@@ -32,7 +32,7 @@ class LegacyProxy<T> {
     }
 
     private _makeProxy<U, W>(target: U, source: W, key: string) {
-        /// #ifdef DEBUG
+        /// #if DEBUG
         if (!source) {
             throw new Error("Source cannot be null");
         }
