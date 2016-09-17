@@ -1,6 +1,5 @@
 export { IImmutableCloneStrategy } from "./strategies/clone";
 
-export { DefaultImmutableBackend, IImmutableBackend } from "./backends/backend";
-export { ImmutableJsBackendAdapter } from "./backends/immutablejs";
+export { makeImmutableJs } from "./immutablejs.adapter";
 
 export { makeImmutable, IImmutable } from "./immutable";

@@ -4,11 +4,10 @@ import "mocha";
 import { expect } from "chai";
 
 import { makeImmutable } from "./immutable";
-import { DefaultImmutableBackend, IImmutableBackend } from "./backends/backend";
 import { IImmutableCloneStrategy } from "./strategies/clone";
 
 import * as ImmutableJS from "immutable";
-import { ImmutableJsBackendAdapter } from "./backends/immutablejs";
+import { makeImmutableJs } from "./immutablejs.adapter";
 
 export interface IA {
     b: IB;
@@ -46,17 +45,15 @@ const a: IA = {
 
 describe("Immutable", () => {
     it("ts", () => {
-        var i = makeImmutable(a);
-        let a1 = i.data;
-        expect(a).to.be.eq(a1);
+        var i1 = makeImmutable(a);
+        let a1 = i1.data;
+        expect(a).to.be.eq(i1.data);
 
-        let a11 = i.data;
-        expect(a1).to.be.eq(a11);
-        expect(() => a1.b = null).to.throws();
-        expect(a1.b).to.be.not.eq(null);
+        expect(() => i1.data.b = null).to.throws();
+        expect(i1.data.b).to.be.not.eq(null);
 
-        i.set(x => x.b.c.name, "12");
-        let a2 = i.data;
+        let i2 = i1.set(x => x.b.c.name, "12");
+        let a2 = i2.data;
 
         expect(a1).to.be.not.eq(a2, "Root is cloned for change");
         expect(a1.b).to.be.not.eq(a2.b, "Path is cloned for change");
@@ -64,38 +61,35 @@ describe("Immutable", () => {
         expect(a2.b.c.name).to.be.equal("12");
         expect(a2.b2).to.be.deep.equal(a1.b2, "Only changed paths are cloned");
 
-        i.set(x => x.b2.ar, [3, 4]);
-        i.set(x => x.foo, "bar2");
-        let a3 = i.data;
-
-        expect(a3.foo).to.be.equal("bar2");
-        expect(a3.b2.ar).to.be.not.equal(a2.b2.ar);
-
-        let t = i.set(x => x.b.c.name, "bar3");
+        let i3 = i2.set(x => x.b2.ar, [3, 4]);
+        expect(i3.data.b2.ar).to.be.not.equal(i2.data.b2.ar);
+        
+        let i4 = i3.set(x => x.foo, "bar2");
+        expect(i4.data.foo).to.be.equal("bar2");
     });
 
     it("modify root", () => {
         var i = makeImmutable(a);
 
-        let a1 = i.set(x => x.foo, "12");
-        expect(a1.data.foo).to.be.equal("12");
+        let i2 = i.set(x => x.foo, "12");
+        expect(i2.data.foo).to.be.equal("12");
     });
 
     it("set multiple properties at once", () => {
         var i = makeImmutable(a);
 
         let a1 = i.data;
-        let a2 = i.update(x => x.b2.c, x => ({
+        let i2 = i.update(x => x.b2.c, x => ({
             "id": 11,
             "name": "12"
         }));
 
-        expect(a1).to.be.not.eq(a2);
+        expect(a1).to.be.not.eq(i2);
         expect(a1.b2.c.id).to.be.eq(23);
         expect(a1.b2.c.name).to.be.eq("c2");
 
-        expect(a2.data.b2.c.id).to.be.eq(11);
-        expect(a2.data.b2.c.name).to.be.eq("12");
+        expect(i2.data.b2.c.id).to.be.eq(11);
+        expect(i2.data.b2.c.name).to.be.eq("12");
     });
 
     it("set complex value", () => {
@@ -119,6 +113,7 @@ describe("Immutable", () => {
         expect(i1).to.be.not.equal(i2);
         expect(i1.foo).to.be.not.equal(i2.data.foo);
         expect(i2.data.foo).to.be.deep.equal([1, 2, 3]);
+        expect(i.data.foo).to.be.deep.equal([1, 2]);
     })
 });
 
@@ -127,12 +122,12 @@ interface IX {
     ar: ImmutableJS.List<number>
 }
 
-describe("ImmutableJS Backend", () => {
+describe("ImmutableJS Adapter", () => {
     it("works", () => {
-        let i = makeImmutable<IX>(<any>{
+        let i = makeImmutableJs<IX>(<any>{
             name: "foo",
             ar: [1, 2, 3]
-        }, new ImmutableJsBackendAdapter<IX>());
+        });
 
         let i2 = i.set(x => x.name, "bar");
         expect(i2).is.not.equal(i);
@@ -174,22 +169,23 @@ class CustomCloneStrategy implements IImmutableCloneStrategy {
     }
 }
 
+
 describe("CustomCloneStrategy", () => {
     it("is used", () => {
-        let a = makeImmutable<X>(new X(23), new DefaultImmutableBackend<X>(new CustomCloneStrategy()));
+        let i = makeImmutable<X>(new X(23), new CustomCloneStrategy());
 
-        a.set(x => x.foo, 42);
-        let a2 = a.data;
-        expect(a).to.be.not.equal(a2);
-        expect(a2.foo).to.be.equal(42);
+        let i2 = i.set(x => x.foo, 42);
+        expect(i.data).to.be.not.equal(i2.data);
+
+        expect(i.data.foo).to.be.equal(23);
+        expect(i2.data.foo).to.be.equal(42);
     });
 
     it("is used for multiple types", () => {
-        let a = makeImmutable(new Y("23"), new DefaultImmutableBackend<Y>(new CustomCloneStrategy()));
+        let i = makeImmutable(new Y("23"), new CustomCloneStrategy());
 
-        a.set(x => x.bar, "42");
-        let a2 = a.data;
-        expect(a).to.be.not.equal(a2);
-        expect(a2.bar).to.be.equal("42");
+        let i2 = i.set(x => x.bar, "42");
+        expect(a).to.be.not.equal(i2.data);
+        expect(i2.data.bar).to.be.equal("42");
     });
 });
