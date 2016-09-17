@@ -17,17 +17,16 @@ interface IA {
     name: string;
 }
 
-let i = new Immutable<IA>({  
+let a1 = makeImmutable<IA>({  
     id: 42,
     name: "foo"
 });
 
-let a = i.get();
-let a2 = i.set(x => x.id, 23);
+let a2 = a1.set(x => x.id, 23);
 
-// a !== a2 => true
+// a1 !== a2 => true
 
-let a3 = i.set(x => x.id, "23"); // Results in compiler error, string cannot be assigned to number 
+let a3 = a2.set(x => x.id, "23"); // Results in compiler error, string cannot be assigned to number 
 ```
 
 ### Nested  
@@ -49,7 +48,7 @@ interface IC {
     b: IB;
 }
 
-let i = new Immutable<IC>({
+let c = makeImmutable<IC>({
         b: {
             a1: {  
                 id: 42,
@@ -62,27 +61,23 @@ let i = new Immutable<IC>({
         }
     });
 
-let c = i.get();
-let c2 = i.set(x => x.b.a1.id, 12);
-let c3 = i.get();
+let c2 = c.set(x => x.b.a1.id, 12);
 
 // c !== c2 => true
-// c2 === c3 => true
 
-// c.b.a2 === c2.b.a2 => true
-// c.b.a1 !== c2.b.a1 => true
+// c.data.b.a2 === c2.data.b.a2 => true
+// c.data.b.a1 !== c2.data.b.a1 => true
 ```
 
 when you execute this:
 
 ```TypeScript
-let c2 = i.set(x => x.b.a1.id, 12);
+let c2 = c.set(x => x.b.a1.id, 12);
 ```
 
 the root, `b`, and `a1` will be automatically cloned, before the new `id` is assigned to a1. And again, everything is type-safe, something like
-
 ```TypeScript
-let c4 = i.set(x => x.b.a1.id, "12");
+let c4 = c.set(x => x.b.a1.id, "12");
 ``` 
 would result in a compiler error, because the types of `id` and `"12"` do not match. 
 
@@ -107,7 +102,7 @@ class CustomCloneStrategy implements IImmutableCloneStrategy {
     }
 }
 
-let a = new Immutable(new X(23), new DefaultImmutableBackend<X>(new CustomCloneStrategy());
+let a = makeImmutable(new X(23), new DefaultImmutableBackend<X>(new CustomCloneStrategy());
 let a2 = a.set(x => x.bar, 42);
 
 // a !== a2 => true
@@ -138,14 +133,14 @@ class CustomCloneStrategy implements IImmutableCloneStrategy {
     }
 }
 
-let a = new Immutable(new Y("23"), new DefaultImmutableBackend<Y>(new CustomCloneStrategy()));
+let a = makeImmutable(new Y("23"), new DefaultImmutableBackend<Y>(new CustomCloneStrategy()));
 let a2 = a.set(x => x.bar, "42");
 let a3 = a.update(x => x.bar, x => x + "3");
 
 // a !== a2 => true
-// a.bar === "23" => true
-// a2.bar === "42" => true
-// a3.bar === "423" => true
+// a.data.bar === "23" => true
+// a2.data.bar === "42" => true
+// a3.data.bar === "423" => true
 ```
 
 ## Other backends
@@ -155,7 +150,7 @@ You can build your own backend/adapter or use the provided one for `immutable-js
 Usage: 
 
 ```TypeScript
-let a = new Immutable<IC>({ ... }, new ImmutableJsAdapterBackend<IC>());
+let a = makeImmutable<IC>({ ... }, new ImmutableJsAdapterBackend<IC>());
 ```
 
 Code:

@@ -1,5 +1,3 @@
-import "../common";
-
 /** @internal*/
 function isPlainObject<T>(source: T): boolean {
     return !!source

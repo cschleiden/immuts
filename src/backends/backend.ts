@@ -47,15 +47,24 @@ export class DefaultImmutableBackend<T> implements IImmutableBackend<T> {
         /// #endif
     }
 
-    public update<U>(path: string[], update: (target: U) => void) {
-        let tail = this._applyPath(path);
+    public update<U>(path: string[], update: (target: U) => U) {
+        let tail = this._applyPath(path.slice(0, path.length - 1));
 
-        update(tail);
+        const lastKey = path[path.length - 1];
+        const existingValue = tail[lastKey];
+        const newValue = update(existingValue);
+
+        /// #if DEBUG
+        if (existingValue === newValue) {
+            throw new  Error("Update returned existing value");
+        }
+        /// #endif
+
+        tail[lastKey] = newValue;
 
         /// #if DEBUG
         this._completeSet();
         /// #endif
-
     }
 
     public get(): T {

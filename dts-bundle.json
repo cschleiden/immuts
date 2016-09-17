@@ -1,0 +1,7 @@
+{
+    "name": "immuts",
+    "main": "build/main.d.ts",
+    "outputAsModuleFolder": true,
+    "out": "../dist/immuts.d.ts",
+    "exclude": "/common/"
+}

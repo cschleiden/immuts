@@ -1,11 +1,11 @@
 var webpack = require('webpack'),
-    path = require('path'),
-    yargs = require('yargs');
- 
+  path = require('path'),
+  yargs = require('yargs');
+
 var libraryName = 'immuts',
-    plugins = [],
-    outputFile;
- 
+  plugins = [],
+  outputFile;
+
 var c = {
   DEBUG: true
 };
@@ -17,18 +17,21 @@ if (yargs.argv.p) {
 } else {
   outputFile = libraryName + '.js';
 }
- 
+
 var q = require("querystring").encode({ json: JSON.stringify(c) });
 
 var config = {
   entry: [
-    __dirname + '/src/immutable.ts'
-  ],  
+    __dirname + '/src/main.ts'
+  ],
   output: {
-    filename: "./dist/"+ outputFile,
+    filename: "./dist/" + outputFile,
     library: libraryName,
     libraryTarget: 'umd',
     umdNamedDefine: true
+  },
+  externals: {
+    "immutable": "immutable"
   },
   module: {
     loaders: [
@@ -37,9 +40,9 @@ var config = {
   },
   resolve: {
     root: path.resolve('./src'),
-    extensions: [ '', '.js', '.ts', '.jsx', '.tsx' ]
+    extensions: ['', '.js', '.ts', '.jsx', '.tsx']
   },
   plugins: plugins
 };
- 
+
 module.exports = config;

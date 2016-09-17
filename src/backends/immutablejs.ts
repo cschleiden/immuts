@@ -1,20 +1,20 @@
 import { IImmutableBackend } from "./backend";
 
-import * as Immutable from "immutable";
+import * as ImmutableJs from "immutable";
 
 export class ImmutableJsBackendAdapter<T> implements IImmutableBackend<T> {
-    private data: Immutable.Map<string, any>;
+    private data: ImmutableJs.Map<string, any>;
 
     public init(data: T) {
-        this.data = Immutable.fromJS(data);
+        this.data = ImmutableJs.fromJS(data);
     }
 
     public set<U>(path: string[], value: U) {
-        this.data.setIn(path, value);
+        this.data = this.data.setIn(path, value);
     }
 
-    public update<U>(path: string[], update: (target: U) => void) {
-        this.data.updateIn(path, update);
+    public update<U>(path: string[], update: (target: U) => U) {
+        this.data = this.data.updateIn(path, update);
     }
 
     public get(): T {
