@@ -11,13 +11,13 @@ import { makeImmutableJs } from "./immutablejs.adapter";
 
 export interface IA {
     b: IB;
-    b2: IB;
-    foo: string;
+    readonly b2: IB;
+    readonly foo: string;
 }
 
 export interface IB {
-    c: IC;
-    ar: number[];
+    readonly c: IC;
+    readonly ar: ReadonlyArray<number>;
 }
 
 export interface IC {
