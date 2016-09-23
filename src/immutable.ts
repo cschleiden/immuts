@@ -27,7 +27,7 @@ if (typeof Object["assign"] != 'function') {
 }
 
 export interface IImmutable<T> {
-    data: T;
+    readonly data: T;
 
     set<U>(set: (data: T) => U, value: U): IImmutable<T>;
 
