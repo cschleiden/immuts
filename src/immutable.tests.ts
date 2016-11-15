@@ -75,6 +75,15 @@ describe("Immutable", () => {
         expect(i2.data.foo).to.be.equal("12");
     });
 
+    it("set value in array", () => {
+        var i = makeImmutable(a);
+
+        let i2 = i.set(x => x.b2.ar[1], 42);
+
+        expect(i2).to.be.not.equal(i);
+        expect(i2.data.b2.ar[1]).to.be.equal(42);
+    });
+
     it("set multiple properties at once", () => {
         var i = makeImmutable(a);
 
