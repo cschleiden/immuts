@@ -26,12 +26,34 @@ if (typeof Object["assign"] != 'function') {
     };
 }
 
+export type Partial<T> = {
+    [P in keyof T]?: T[P];
+};
+
 export interface IImmutable<T> {
+    /** 
+     * Get data as plain JS object. 
+     */
     readonly data: T;
 
-    set<U>(set: (data: T) => U, value: U): IImmutable<T>;
+    /**
+     * Return data as plain JS object.
+     * Alias for data getter
+     */
+    toJS(): T;
 
-    update<U>(set: (data: T) => U, update: (target: U) => U): IImmutable<T>;
+    replace(data: T): IImmutable<T>;
+
+    /**
+     * Updates a value at the given path
+     * @param select Path to update
+     * @param value New value to set
+     */
+    set<U>(select: (data: T) => U, value: U): IImmutable<T>;
+
+    update<U>(select: (data: T) => U, update: (target: U) => U): IImmutable<T>;
+
+    merge<U>(select: (data: T) => U, value: Partial<U>): IImmutable<T>;
 }
 
 namespace DefaultBackend {
@@ -51,6 +73,17 @@ namespace DefaultBackend {
     export function set<T, U>(data: T, cloneStrategy: IImmutableCloneStrategy, path: string[], value: U): T {
         let { root, tail } = applyPath(data, cloneStrategy, path.slice(0, path.length - 1));
         tail[path[path.length - 1]] = value;
+
+        return root;
+    }
+
+    export function merge<T, U>(data: T, cloneStrategy: IImmutableCloneStrategy, path: string[], value: Partial<U>): T {
+        let { root, tail } = applyPath(data, cloneStrategy, path.slice(0, path.length - 1));
+
+        const lastKey = path[path.length - 1];
+        const existingValue = tail[lastKey];
+        const newValue = (<any>Object).assign({}, existingValue, value);
+        tail[lastKey] = newValue;
 
         return root;
     }
@@ -96,10 +129,22 @@ function makeImmutableImpl<T>(
             return data;
         },
 
-        set: <U>(set: (data: T) => U, value: U): IImmutable<T> => {
-            set(proxy.get());
+        toJS(): T {
+            return this.data;
+        },
+
+        set: <U>(select: (data: T) => U, value: U): IImmutable<T> => {
+            select(proxy.get());
 
             let result = DefaultBackend.set(data, cloneStrategy, proxy.propertiesAccessed, value);
+
+            return makeImmutableImpl<T>(result, cloneStrategy, proxy);
+        },
+
+        merge: <U>(select: (data: T) => U, value: Partial<U>): IImmutable<T> => {
+            select(proxy.get());
+
+            let result = DefaultBackend.merge(data, cloneStrategy, proxy.propertiesAccessed, value);
 
             return makeImmutableImpl<T>(result, cloneStrategy, proxy);
         },

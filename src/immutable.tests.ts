@@ -45,7 +45,7 @@ const a: IA = {
 
 describe("Immutable", () => {
     it("ts", () => {
-        var i1 = makeImmutable(a);
+        let i1 = makeImmutable(a);
         let a1 = i1.data;
         expect(a).to.be.eq(i1.data);
 
@@ -63,9 +63,18 @@ describe("Immutable", () => {
 
         let i3 = i2.set(x => x.b2.ar, [3, 4]);
         expect(i3.data.b2.ar).to.be.not.equal(i2.data.b2.ar);
-        
+
         let i4 = i3.set(x => x.foo, "bar2");
         expect(i4.data.foo).to.be.equal("bar2");
+    });
+
+    it("merge", () => {
+        let i1 = makeImmutable(a);
+        let i2 = i1.merge(x => x.b2, {
+            ar: [23, 42]
+        });
+
+        expect(i2).to.be.not.eq(i1);
     });
 
     it("modify root", () => {
