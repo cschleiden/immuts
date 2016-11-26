@@ -1,11 +1,8 @@
 immuts
 =====
 
-Type-safe, generic immutable datastructure for Typescript. Can be used as thin wrapper over `immutablejs` (or similar libraries) or on its own. 
+Type-safe, generic immutable datastructure for Typescript. Can be used as thin wrapper over `immutablejs` (or similar libraries) or on its own. Does not require manually setting JS paths `["a", "b", "c"]` but allows TS autocompleted drilldown.
 
-## Motivation
-
-tbd
 
 ## Usage 
 
@@ -26,7 +23,51 @@ let a2 = a1.set(x => x.id, 23);
 
 // a1 !== a2 => true
 
-let a3 = a2.set(x => x.id, "23"); // Results in compiler error, string cannot be assigned to number 
+let a3 = a2.set(x => x.id, "23"); // Results in compiler error, string cannot be assigned to number
+
+// Back to JS
+let plainJs = a3.data;
+
+// or
+let plainJs2 = a3.toJS(); 
+```
+
+### Updating multiple properties
+
+```TypeScript
+interface IA {
+    id: number;
+    name: string;
+}
+
+interface IB {
+    a1: IA;
+    a2: IA;
+}
+
+interface IC {
+    b: IB;
+}
+
+let c = makeImmutable<IC>({
+        b: {
+            a1: {  
+                id: 42,
+                name: "foo"
+            }, 
+            a2: {
+                id: 23,
+                name: "bar"
+            }
+        }
+    });
+
+let c2 = c.merge(x => x.b.a1, {
+    id: 23
+});
+
+// c2.data.b.a1.id === 23 => true
+// c2.data.b.a1.name === "foo" => true
 ```
 
 ### Nested  
