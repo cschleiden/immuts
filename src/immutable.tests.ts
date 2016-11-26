@@ -70,11 +70,22 @@ describe("Immutable", () => {
 
     it("merge", () => {
         let i1 = makeImmutable(a);
+
         let i2 = i1.merge(x => x.b2, {
             ar: [23, 42]
         });
 
         expect(i2).to.be.not.eq(i1);
+        expect(i2.data.b).to.be.eq(i1.data.b);
+        expect(i2.data.b2.ar).to.be.deep.equal([23, 42]);
+        
+        let i3 = i2.merge(x => x.b2, {
+            ar: [0, 1]
+        });
+
+        expect(i3).to.be.not.eq(i2);
+        expect(i3.data.b).to.be.eq(i1.data.b);
+        expect(i3.data.b2.ar).to.be.deep.equal([0, 1]);
     });
 
     it("modify root", () => {
