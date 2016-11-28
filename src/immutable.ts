@@ -26,9 +26,7 @@ if (typeof Object["assign"] != 'function') {
     };
 }
 
-export type Partial<T> = {
-    [P in keyof T]?: T[P];
-};
+export type Partial<T> = T;
 
 export interface IImmutable<T> {
     /** 
@@ -41,8 +39,6 @@ export interface IImmutable<T> {
      * Alias for data getter
      */
     toJS(): T;
-
-    replace(data: T): IImmutable<T>;
 
     /**
      * Updates a value at the given path

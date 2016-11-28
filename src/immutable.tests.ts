@@ -71,7 +71,7 @@ describe("Immutable", () => {
     it("merge", () => {
         let i1 = makeImmutable(a);
 
-        let i2 = i1.merge(x => x.b2, {
+        let i2 = i1.merge(x => x.b2, <any>{
             ar: [23, 42]
         });
 
@@ -79,7 +79,7 @@ describe("Immutable", () => {
         expect(i2.data.b).to.be.eq(i1.data.b);
         expect(i2.data.b2.ar).to.be.deep.equal([23, 42]);
         
-        let i3 = i2.merge(x => x.b2, {
+        let i3 = i2.merge(x => x.b2, <any>{
             ar: [0, 1]
         });
 
