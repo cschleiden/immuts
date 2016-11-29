@@ -53,51 +53,52 @@ export interface IImmutable<T> {
 }
 
 namespace DefaultBackend {
-    function applyPath<T>(data: T, cloneStrategy: IImmutableCloneStrategy, keyPath: string[]): { root: T; tail: any } {
-        let result = cloneStrategy.clone(data);
+    function applyPath<T>(data: T, cloneStrategy: IImmutableCloneStrategy, keyPath: string[], skipLast: boolean): { root: T; tail: any, lastProperty?: string } {
+        // Clone root
+        let root = cloneStrategy.clone(data);
 
-        let tail: any = result;
+        let lastProperty: string = null;
+        if (skipLast && keyPath.length > 0) {
+            lastProperty = keyPath[keyPath.length - 1];
+            keyPath = keyPath.slice(0, keyPath.length - 1);
+        }
+
+        // Follow path and clone objects
+        let tail: any = root;
         for (let propertyName of keyPath) {
             let propertyValueClone = cloneStrategy.clone(tail[propertyName]);
             tail[propertyName] = propertyValueClone;
             tail = propertyValueClone;
         }
 
-        return { root: result, tail: tail };
+        return { root: root, tail: tail, lastProperty };
     }
 
     export function set<T, U>(data: T, cloneStrategy: IImmutableCloneStrategy, path: string[], value: U): T {
-        let { root, tail } = applyPath(data, cloneStrategy, path.slice(0, path.length - 1));
-        tail[path[path.length - 1]] = value;
+        let { root, tail, lastProperty } = applyPath(data, cloneStrategy, path, true);
+
+        if (lastProperty) {
+            tail[lastProperty] = value;
+        } else {
+            // Root
+            (<any>Object).assign(root, value);
+        }
 
         return root;
     }
 
     export function merge<T, U>(data: T, cloneStrategy: IImmutableCloneStrategy, path: string[], value: Partial<U>): T {
-        let { root, tail } = applyPath(data, cloneStrategy, path.slice(0, path.length - 1));
+        let { root, tail } = applyPath(data, cloneStrategy, path, false);
 
-        const lastKey = path[path.length - 1];
-        const existingValue = tail[lastKey];
-        const newValue = (<any>Object).assign({}, existingValue, value);
-        tail[lastKey] = newValue;
+        (<any>Object).assign(tail, value);
 
         return root;
     }
 
     export function update<T, U>(data: T, cloneStrategy: IImmutableCloneStrategy, path: string[], update: (target: U) => U): T {
-        let { root, tail } = applyPath(data, cloneStrategy, path.slice(0, path.length - 1));
-
-        const lastKey = path[path.length - 1];
-        const existingValue = tail[lastKey];
-        const newValue = update(existingValue);
-
-        /// #if DEBUG
-        if (existingValue === newValue) {
-            throw new Error("Update returned existing value");
-        }
-        /// #endif
-
-        tail[lastKey] = newValue;
+        let { root, tail } = applyPath(data, cloneStrategy, path, false);
+        
+        (<any>Object).assign(tail, update(tail));
 
         return root;
     }

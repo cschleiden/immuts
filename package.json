@@ -1,6 +1,6 @@
 {
   "name": "immuts",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "",
   "main": "dist/immuts.min.js",
   "typings": "dist/immuts.d.ts",
