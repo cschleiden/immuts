@@ -3,6 +3,9 @@ immuts
 
 Type-safe, generic immutable datastructure for Typescript. Can be used as thin wrapper over `immutablejs` (or similar libraries) or on its own. Does not require manually setting JS paths `["a", "b", "c"]` but allows TS autocompleted drilldown.
 
+## Changelog
+
+ * **0.3.0** - Improved support for working with arrays and maps
 
 ## Usage 
 
@@ -121,6 +124,69 @@ the root, `b`, and `a1` will be automatically cloned, before the new `id` is ass
 let c4 = c.set(x => x.b.a1.id, "12");
 ``` 
 would result in a compiler error, because the types of `id` and `"12"` do not match. 
+
+### Maps
+
+#### Add element
+
+```TypeScript
+const c = makeImmutable({
+    foo: {
+        "a": 42,
+        "b": 23
+    }
+});
+
+const c2 = c.merge(x => x.foo, {
+    "c": 11
+});
+
+// c1.data.foo !== c2.data.foo => true
+// c2.data.foo deep equals { "a": 42, "b": 23, "c": 11 }
+```
+
+#### Remove element
+
+```TypeScript
+const c = makeImmutable({
+    foo: {
+        "a": 42,
+        "b": 23
+    }
+});
+
+const c2 = c.remove(x => x.foo["b"]);
+
+// c1.data.foo !== c2.data.foo => true
+// c2.data.foo deep equals { "a": 42 }
+```
+
+### Arrays 
+
+#### Add element
+
+```TypeScript
+const c = makeImmutable({
+    foo: [1, 2]
+});
+
+const c2 = c.update(x => x.foo, x => x.concat([3]));
+
+// c1.data.foo !== c2.data.foo => true
+// c2.data.foo deep equals [1, 2, 3] => true
+```
+
+#### Remove element
+
+```TypeScript
+const c = makeImmutable({
+    foo: [1, 2, 3]
+});
+
+const c2 = c.remove(x => x.foo[2]);
+
+// c2.data.foo deep equals [2, 3] => true
+```
 
 ### Complex Types
 
