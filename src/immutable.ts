@@ -1,5 +1,3 @@
-/// <reference path="../typings/index.d.ts" />
-
 import { IImmutableCloneStrategy, DefaultCloneStrategy } from "./strategies/clone";
 import { ImmutableProxy } from "./proxy";
 

@@ -1,5 +1,3 @@
-/// <reference path="../typings/index.d.ts" />
-
 import "mocha";
 import { expect } from "chai";
 
@@ -7,7 +5,6 @@ import { makeImmutable } from "./immutable";
 import { IImmutableCloneStrategy } from "./strategies/clone";
 
 import * as ImmutableJS from "immutable";
-import { makeImmutableJs } from "./immutablejs.adapter";
 
 export interface IA {
     b: IB;
@@ -215,28 +212,6 @@ describe("Immutable", () => {
                 "a": 42
             });
         });
-    });
-});
-
-interface IX {
-    name: string,
-    ar: ImmutableJS.List<number>
-}
-
-describe("ImmutableJS Adapter", () => {
-    it("works", () => {
-        const i = makeImmutableJs<IX>(<any>{
-            name: "foo",
-            ar: [1, 2, 3]
-        });
-
-        const i2 = i.set(x => x.name, "bar");
-        expect(i2).is.not.equal(i);
-
-        const i3 = i2.update(x => x.ar, a => a.push(4));
-        expect(i3).is.not.equal(i2);
-
-        expect(i3.data.ar).to.be.deep.equal([1, 2, 3, 4]);
     });
 });
 

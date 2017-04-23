@@ -1,10 +1,11 @@
 immuts
 =====
 
-Type-safe, generic immutable datastructure for Typescript. Can be used as thin wrapper over `immutablejs` (or similar libraries) or on its own. Does not require manually setting JS paths `["a", "b", "c"]` but allows TS autocompleted drilldown.
+Type-safe, generic immutable datastructure for Typescript. Does not require manually setting JS paths `["a", "b", "c"]` and allows TS autocompleted drilldown.
 
 ## Changelog
 
+ * **0.4.0** - Removed incomplete immutablejs adapter for now
  * **0.3.0** - Improved support for working with arrays and maps
 
 ## Usage 
