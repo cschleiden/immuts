@@ -3,7 +3,8 @@
         "module": "amd",
         "target": "es5",
         "outDir": "build",
-        "declaration": true
+        "declaration": true,
+        "types": ["mocha", "chai"]
     },
     "exclude": [
         "node_modules",
