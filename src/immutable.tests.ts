@@ -46,7 +46,7 @@ describe("Immutable", () => {
         const a1 = i1.data;
         expect(a).to.be.eq(i1.data);
 
-        expect(() => i1.data.b = null).to.throws();
+        expect(() => (i1.data as any).b = null).to.throws();
         expect(i1.data.b).to.be.not.eq(null);
 
         const i2 = i1.set(x => x.b.c.name, "12");
@@ -130,44 +130,34 @@ describe("Immutable", () => {
     });
 
     describe("native array", () => {
-        it("add element with update", () => {
+        it("add element", () => {
             const i = makeImmutable({
                 foo: [1, 2]
             });
 
             const i1 = i.data;
-            const i2 = i.update(x => x.foo, x => x.concat([3]));
+            const i2 = i.array.insert(x => x.foo, 3);
             expect(i1).to.be.not.equal(i2);
             expect(i1.foo).to.be.not.equal(i2.data.foo);
             expect(i2.data.foo).to.be.deep.equal([1, 2, 3]);
             expect(i.data.foo).to.be.deep.equal([1, 2]);
+
+            const i3 = i2.array.insert(x => x.foo, 4, 1);
+            expect(i2).to.be.not.equal(i3);
+            expect(i3.data.foo).to.be.deep.equal([1, 4, 2, 3]);
         });
-        
-        it("remove item with filter", () => {
+
+        it("remove item", () => {
             const i = makeImmutable({
                 foo: [{ name: "1" }, { name: "2" }, { name: "3" }]
             });
 
             const i1 = i.data;
-            const i2 = i.update(x => x.foo, x => x.filter(y => y.name !== "1"));
+            const i2 = i.array.remove(x => x.foo, 0);
             expect(i1).to.be.not.equal(i2.data);
             expect(i1.foo).to.be.not.equal(i2.data.foo);
             expect(i2.data.foo).to.be.deep.equal([{ name: "2" }, { name: "3" }]);
             expect(i.data.foo).to.be.deep.equal([{ name: "1" }, { name: "2" }, { name: "3" }]);
-        });
-
-        it("remove item with `remove`", () => {
-            const i = makeImmutable({
-                foo: [{ name: "1" }, { name: "2" }, { name: "3" }]
-            });
-
-            const d1 = i.data;
-            const i2 = i.remove(x => x.foo[0]);
-            const d2 = i2.data;
-            expect(d1).to.be.not.equal(d2);
-            expect(d1.foo).to.be.not.equal(d2.foo);
-            expect(d2.foo).to.be.deep.equal([{ name: "2" }, { name: "3" }]);
-            expect(d1.foo).to.be.deep.equal([{ name: "1" }, { name: "2" }, { name: "3" }]);
         });
     });
 
@@ -191,25 +181,6 @@ describe("Immutable", () => {
                 "a": 42,
                 "b": 23,
                 "c": 11
-            });
-        });
-
-        it("remove element from map", () => {
-            const i = makeImmutable({
-                foo: {
-                    "a": 42,
-                    "b": 23
-                } as { [key: string]: number }
-            });
-
-            const d1 = i.data;
-            const i2 = i.remove(x => x.foo["b"]);
-            const d2 = i2.data;
-
-            expect(d1).to.be.not.equal(d2);
-            expect(d2.foo["b"]).to.be.undefined;
-            expect(d2.foo).to.be.deep.equal({
-                "a": 42
             });
         });
     });

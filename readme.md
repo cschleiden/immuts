@@ -4,7 +4,8 @@ immuts
 Type-safe, generic immutable datastructure for Typescript. Does not require manually setting JS paths `["a", "b", "c"]` and allows TS autocompleted drilldown.
 
 ## Changelog
-
+ 
+ * **0.4.5** - Added some methods for dealing with native arrays
  * **0.4.0** - Removed incomplete immutablejs adapter for now
  * **0.3.0** - Improved support for working with arrays and maps
 
@@ -171,7 +172,7 @@ const c = makeImmutable({
     foo: [1, 2]
 });
 
-const c2 = c.update(x => x.foo, x => x.concat([3]));
+const c2 = c.array.insert(x => x.foo, 3);
 
 // c1.data.foo !== c2.data.foo => true
 // c2.data.foo deep equals [1, 2, 3] => true
@@ -184,7 +185,7 @@ const c = makeImmutable({
     foo: [1, 2, 3]
 });
 
-const c2 = c.remove(x => x.foo[2]);
+const c2 = c.array.remove(x => x.foo, 0);
 
 // c2.data.foo deep equals [2, 3] => true
 ```
@@ -249,39 +250,6 @@ let a3 = a.update(x => x.bar, x => x + "3");
 // a.data.bar === "23" => true
 // a2.data.bar === "42" => true
 // a3.data.bar === "423" => true
-```
-
-## Other backends
-
-You can build your own backend/adapter or use the provided one for `immutable-js`: 
-
-Usage: 
-
-```TypeScript
-let a = makeImmutable<IC>({ ... }, new ImmutableJsAdapterBackend<IC>());
-```
-
-Code:
-```TypeScript
-export class ImmutableJsBackendAdapter<T> implements IImmutableBackend<T> {
-    private data: Immutable.Map<string, any>;
-
-    public init(data: T) {
-        this.data = Immutable.fromJS(data);
-    }
-
-    public set<U>(path: string[], value: U) {
-        this.data.setIn(path.concat([key]), value);
-    }
-
-    public update<U>(path: string[], update: (target: U) => void) {
-        this.data.updateIn(path, update);
-    }
-
-    public get(): T {
-        return this.data.toJS() as T;
-    }
-}
 ```
 
 ## Limitations
