@@ -125,5 +125,21 @@ describe("Immutable", () => {
                 "c": 11
             });
         });
+
+        it("remove element from map", () => {
+            const d1 = makeImmutable({
+                foo: {
+                    "a": 42,
+                    "b": 23
+                } as { [key: string]: number }
+            });
+
+            const propToRemove = "a";
+            const d2 = d1.__set(x => x.foo, ({ [propToRemove]: _, ...r }) => r);
+            expect(d1).to.be.not.equal(d2);
+            expect(d2.foo).to.be.deep.equal({
+                b: 23
+            });
+        });
     });
 });
