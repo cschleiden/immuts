@@ -5,6 +5,7 @@ Type-safe, generic immutable datastructure for Typescript. Does not require manu
 
 ## Changelog
  
+ * **2.0.1** - Vastly simplified 
  * **0.4.5** - Added some methods for dealing with native arrays
  * **0.4.0** - Removed incomplete immutablejs adapter for now
  * **0.3.0** - Improved support for working with arrays and maps
