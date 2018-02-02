@@ -4,7 +4,7 @@ declare var Proxy: any;
 // Detect ES6 proxy support
 let proxySupported: boolean = false;
 try {
-    if (window["Proxy"]) {
+    if ((window as any)["Proxy"]) {
         let p = new Proxy({}, {
             get: () => {
                 return true;
@@ -21,7 +21,7 @@ try {
 class LegacyProxy<T> {
     private _proxyCache = {};
 
-    constructor(source: T, private _get: (name: string) => void, private _done: (name: string, value: any) => void) {
+    constructor(source: T, private _get: (name: string) => void) {
         /// #if DEBUG
         if (!source) {
             throw new Error("Source cannot be null");
@@ -56,11 +56,7 @@ class LegacyProxy<T> {
                         return null;
                     }
 
-                    return this._makeProxy({}, next, `${ key || "" }-${ propertyName }`);
-                },
-                set: (value) => {
-                    this._done(propertyName, value);
-                    return value;
+                    return this._makeProxy({}, next, `${key || ""}-${propertyName}`);
                 }
             });
         }
@@ -76,38 +72,34 @@ class LegacyProxy<T> {
 export class ImmutableProxy<T> {
     private _p: Proxy | LegacyProxy<T>;
 
-    public propertiesAccessed: string[] = [];
+    public path: string[] = [];
 
     /**
      * @param _source Source object, will be used then creating legacy proxy to enumerate propertiesAccessed
      * @param _done Callback when a 'set' operation is called on proxy
      */
-    constructor(private _source: T, private _done: (name: string, value: any) => void) {
+    constructor(private _source: T) {
         if (proxySupported) {
             this._p = new Proxy(
                 {},
                 {
                     get: (target: any, key: string) => {
-                        this.propertiesAccessed.push(key);
+                        this.path.push(key);
 
                         // Recursively return proxy
                         return this._p;
-                    },
-                    set: (target: any, key: string, value: any) => {
-                        this._done(key, value);
-                        return value;
                     }
                 });
         } else {
             this._p = new LegacyProxy<T>(this._source, (name: string) => {
-                this.propertiesAccessed.push(name);
-            }, this._done);
+                this.path.push(name);
+            });
         }
     }
 
     public get(): T {
         // Reset path
-        this.propertiesAccessed = [];
+        this.path = [];
 
         return <any>this._p;
     }

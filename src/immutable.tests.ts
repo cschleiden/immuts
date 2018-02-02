@@ -42,15 +42,11 @@ const a: IA = {
 
 describe("Immutable", () => {
     it("ts", () => {
-        const i1 = makeImmutable(a);
-        const a1 = i1.data;
-        expect(a).to.be.eq(i1.data);
+        const a1 = makeImmutable(a);
 
-        expect(() => (i1.data as any).b = null).to.throws();
-        expect(i1.data.b).to.be.not.eq(null);
+        expect(a1.b).to.be.not.eq(null);
 
-        const i2 = i1.set(x => x.b.c.name, "12");
-        const a2 = i2.data;
+        const a2 = a1.__set(x => x.b.c.name, "12");
 
         expect(a1).to.be.not.eq(a2, "Root is cloned for change");
         expect(a1.b).to.be.not.eq(a2.b, "Path is cloned for change");
@@ -58,54 +54,33 @@ describe("Immutable", () => {
         expect(a2.b.c.name).to.be.equal("12");
         expect(a2.b2).to.be.deep.equal(a1.b2, "Only changed paths are cloned");
 
-        const i3 = i2.set(x => x.b2.ar, [3, 4]);
-        expect(i3.data.b2.ar).to.be.not.equal(i2.data.b2.ar);
+        const i3 = a2.__set(x => x.b2.ar, [3, 4]);
+        expect(i3.b2.ar).to.be.not.equal(a2.b2.ar);
 
-        const i4 = i3.set(x => x.foo, "bar2");
-        expect(i4.data.foo).to.be.equal("bar2");
-    });
-
-    it("merge", () => {
-        const i1 = makeImmutable(a);
-
-        const i2 = i1.merge(x => x.b2, <any>{
-            ar: [23, 42]
-        });
-
-        expect(i2).to.be.not.eq(i1);
-        expect(i2.data.b).to.be.eq(i1.data.b);
-        expect(i2.data.b2.ar).to.be.deep.equal([23, 42]);
-
-        const i3 = i2.merge(x => x.b2, <any>{
-            ar: [0, 1]
-        });
-
-        expect(i3).to.be.not.eq(i2);
-        expect(i3.data.b).to.be.eq(i1.data.b);
-        expect(i3.data.b2.ar).to.be.deep.equal([0, 1]);
+        const i4 = i3.__set(x => x.foo, "bar2");
+        expect(i4.foo).to.be.equal("bar2");
     });
 
     it("modify root", () => {
         const i = makeImmutable(a);
 
-        const i2 = i.set(x => x.foo, "12");
-        expect(i2.data.foo).to.be.equal("12");
+        const i2 = i.__set(x => x.foo, "12");
+        expect(i2.foo).to.be.equal("12");
     });
 
     it("set value in array", () => {
         const i = makeImmutable(a);
 
-        const i2 = i.set(x => x.b2.ar[1], 42);
+        const i2 = i.__set(x => x.b2.ar[1], 42);
 
         expect(i2).to.be.not.equal(i);
-        expect(i2.data.b2.ar[1]).to.be.equal(42);
+        expect(i2.b2.ar[1]).to.be.equal(42);
     });
 
     it("set multiple properties at once", () => {
-        const i = makeImmutable(a);
+        const a1 = makeImmutable(a);
 
-        const a1 = i.data;
-        const i2 = i.update(x => x.b2.c, x => ({
+        const i2 = a1.__set(x => x.b2.c, x => ({
             "id": 11,
             "name": "12"
         }));
@@ -114,67 +89,34 @@ describe("Immutable", () => {
         expect(a1.b2.c.id).to.be.eq(23);
         expect(a1.b2.c.name).to.be.eq("c2");
 
-        expect(i2.data.b2.c.id).to.be.eq(11);
-        expect(i2.data.b2.c.name).to.be.eq("12");
+        expect(i2.b2.c.id).to.be.eq(11);
+        expect(i2.b2.c.name).to.be.eq("12");
     });
 
     it("set complex value", () => {
         const i = makeImmutable({
             foo: [1, 2]
         });
-        const i1 = i.data;
-        const i2 = i.set(x => x.foo, i1.foo.concat([3]));
-        expect(i1).to.be.not.equal(i2);
-        expect(i1.foo).to.be.not.equal(i2.data.foo);
-        expect(i2.data.foo).to.be.deep.equal([1, 2, 3]);
-    });
 
-    describe("native array", () => {
-        it("add element", () => {
-            const i = makeImmutable({
-                foo: [1, 2]
-            });
-
-            const i1 = i.data;
-            const i2 = i.array.insert(x => x.foo, 3);
-            expect(i1).to.be.not.equal(i2);
-            expect(i1.foo).to.be.not.equal(i2.data.foo);
-            expect(i2.data.foo).to.be.deep.equal([1, 2, 3]);
-            expect(i.data.foo).to.be.deep.equal([1, 2]);
-
-            const i3 = i2.array.insert(x => x.foo, 4, 1);
-            expect(i2).to.be.not.equal(i3);
-            expect(i3.data.foo).to.be.deep.equal([1, 4, 2, 3]);
-        });
-
-        it("remove item", () => {
-            const i = makeImmutable({
-                foo: [{ name: "1" }, { name: "2" }, { name: "3" }]
-            });
-
-            const i1 = i.data;
-            const i2 = i.array.remove(x => x.foo, 0);
-            expect(i1).to.be.not.equal(i2.data);
-            expect(i1.foo).to.be.not.equal(i2.data.foo);
-            expect(i2.data.foo).to.be.deep.equal([{ name: "2" }, { name: "3" }]);
-            expect(i.data.foo).to.be.deep.equal([{ name: "1" }, { name: "2" }, { name: "3" }]);
-        });
+        const i2 = i.__set(x => x.foo, i.foo.concat([3]));
+        expect(i).to.be.not.equal(i2);
+        expect(i.foo).to.be.not.equal(i2.foo);
+        expect(i2.foo).to.be.deep.equal([1, 2, 3]);
     });
 
     describe("map", () => {
         it("add element to map", () => {
-            const i = makeImmutable({
+            const d1 = makeImmutable({
                 foo: {
                     "a": 42,
                     "b": 23
                 } as { [key: string]: number }
             });
 
-            const d1 = i.data;
-            const i2 = i.merge(x => x.foo, {
-                "c": 11
-            });
-            const d2 = i2.data;
+            const d2 = d1.__set(x => x.foo, x => ({
+                ...x,
+                ["c"]: 11
+            }));
 
             expect(d1).to.be.not.equal(d2);
             expect(d2.foo).to.be.deep.equal({
@@ -183,56 +125,5 @@ describe("Immutable", () => {
                 "c": 11
             });
         });
-    });
-});
-
-// Test CloneStrategy
-
-interface ICloneable<T> {
-    clone(): T;
-}
-
-class X {
-    constructor(public foo: number) { }
-}
-
-class Y implements ICloneable<Y> {
-    constructor(public bar: string) { }
-
-    public clone(): Y {
-        return new Y(this.bar);
-    }
-}
-
-class CustomCloneStrategy implements IImmutableCloneStrategy {
-    public clone<T>(source: X | ICloneable<T>): X | T {
-        if (source instanceof X) {
-            return new X(source.foo);
-        } else if (source.clone) {
-            return source.clone();
-        }
-
-        throw new Error("Type not supported");
-    }
-}
-
-
-describe("CustomCloneStrategy", () => {
-    it("is used", () => {
-        const i = makeImmutable<X>(new X(23), new CustomCloneStrategy());
-
-        const i2 = i.set(x => x.foo, 42);
-        expect(i.data).to.be.not.equal(i2.data);
-
-        expect(i.data.foo).to.be.equal(23);
-        expect(i2.data.foo).to.be.equal(42);
-    });
-
-    it("is used for multiple types", () => {
-        const i = makeImmutable(new Y("23"), new CustomCloneStrategy());
-
-        const i2 = i.set(x => x.bar, "42");
-        expect(a).to.be.not.equal(i2.data);
-        expect(i2.data.bar).to.be.equal("42");
     });
 });
