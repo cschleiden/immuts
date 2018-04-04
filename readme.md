@@ -3,6 +3,8 @@ immuts
 
 Type-safe, generic immutable datastructure for Typescript. Does not require manually setting JS paths `["a", "b", "c"]` and allows TS autocompleted drilldown.
 
+<img src="./pages/immuts.gif" alt="Editor example of using immuts" width="550" />
+
 ## Changelog
  
  * **2.0.1** - Vastly simplified 
