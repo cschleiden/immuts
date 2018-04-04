@@ -168,7 +168,7 @@ const c2 = c.__set(x => x.foo, ({ [p], ...r }) => r);
 
 ### Internet Explorer and `undefined`
 
-To build up the property path (`i.__set(x => x.a.b.c)` needs to be captured into `["a", "b", "c"]`) the library relies on the ES6 [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) object. In browsers where this is not suppored (mainly all versions of Internet Explorer) a fallback is used using `Object.defineProperty`. 
+To build up the property path (`i.__set(x => x.a.b.c)` needs to be captured into `["a", "b", "c"]`) the library relies on the ES6 [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) object. In browsers where this is not supported (mainly all versions of Internet Explorer) a fallback is used using `Object.defineProperty`. 
 
 This method does not deal correctly with optional properties, so something like this:
 
@@ -178,7 +178,7 @@ interface IA {
     bar: number;
 }
 
-let i = new Immutable<IA>({
+let i = makeImmutable<IA>({
     // foo: "test", - leave undefined! 
     bar: 42
 });
@@ -186,4 +186,4 @@ let i = new Immutable<IA>({
 i.__set(x => x.foo, "test2");
 ```
 
-would fail because `foo` did not exist at the time of creation. If you don't target Internet Explorer this will not be an issue and everything should work just fine, otherwise do not use optional properties, initialize to `null`.
+would fail because `foo` did not exist (i.e., it was `undefined`) at the time of creation. If you don't target Internet Explorer this will not be an issue and everything should work just fine, otherwise do not use optional properties, and/or initialize to `null` instead of `undefined`.
