@@ -1,6 +1,6 @@
 {
   "name": "immuts",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Simple, type-safe immutable data structure for Typescript",
   "repository": "cschleiden/immuts",
   "main": "dist/immuts.min.js",
@@ -11,7 +11,16 @@
     "build": "webpack --debug && webpack -p && dts-bundle --configJson ./dts-bundle.json",
     "clean": "rimraf build && rimraf dist"
   },
-  "author": "cschleiden",
+  "keywords": [
+    "typescript",
+    "immutable",
+    "type-safe"
+  ],
+  "author": {
+    "name": "Christopher Schleiden",
+    "email": "cschleiden@outlook.com",
+    "url": "https://www.cschleiden.de/"
+  },
   "license": "MIT",
   "devDependencies": {
     "@types/chai": "^3.5.1",
