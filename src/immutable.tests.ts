@@ -1,10 +1,7 @@
 import "mocha";
 import { expect } from "chai";
-
 import { makeImmutable } from "./immutable";
-import { IImmutableCloneStrategy } from "./strategies/clone";
-
-import * as ImmutableJS from "immutable";
+import { push, remove } from "./array";
 
 export interface IA {
     b: IB;
@@ -142,4 +139,43 @@ describe("Immutable", () => {
             });
         });
     });
+
+    describe("array", () => {
+        it("common operations", () => {
+            const s1 = makeImmutable({
+                name: "name",
+                foo: [1, 2]
+            });
+
+            const s2 = s1.__set(x => x.foo, x => push(x, 3));
+            expect(s2.foo).to.be.deep.equal([1, 2, 3]);
+
+            const s3 = s2.__set(x => x.foo, x => remove(x, 1));
+            expect(s3.foo).to.be.deep.equal([1, 3]);
+        });
+    });
 });
+
+
+
+
+interface IBar {
+    name: string;
+}
+
+interface IFoo {
+    bar: IBar;
+
+    count: number;
+    description: string;
+}
+
+const d1 = makeImmutable<IFoo>({
+    bar: {
+        name: "bar"
+    },
+
+    count: 42,
+    description: "Some object"
+});
+

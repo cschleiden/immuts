@@ -26,24 +26,13 @@ if (typeof Object["assign"] != 'function') {
 
 export type PathSelector<T, U> = (data: T) => U;
 
-// Courtesy of https://github.com/Microsoft/TypeScript/issues/15012#issuecomment-346499713
-type NonNullable<T> = T & {};
-type Purify<T extends string> = {[P in T]: T; }[T];
-type Required<T> = {
-    [P in Purify<keyof T>]: NonNullable<T[P]>;
-};
-
-type DeepReadonly<T> = {
-    readonly [P in keyof T]: DeepReadonly<T[P]>;
-}
-
-export interface IImmutableUpdate<T> {
+export interface IImmutableOperations<T> {
     __set(value: T): IImmutable<T>;
-    __set<U>(select: PathSelector<T, U>, update: (target: U) => U): IImmutable<T>;
+    __set<U>(select: PathSelector<T, U>, update: (value: U) => U): IImmutable<T>;
     __set<U>(select: PathSelector<T, U>, value: U): IImmutable<T>;
 }
 
-export type IImmutable<T> = Readonly<T> & IImmutableUpdate<T>;
+export type IImmutable<T> = Readonly<T> & IImmutableOperations<T>;
 
 namespace DefaultBackend {
     function applyPath<T, U>(data: T, cloneStrategy: IImmutableCloneStrategy, path: string[]): { root: T; tail: U; lastProperty?: string } {
@@ -106,7 +95,7 @@ export interface IImmutableOptions {
 }
 
 export function makeImmutable<T>(data: T, options?: IImmutableOptions): IImmutable<T> {
-    return makeImmutableImpl(data);
+    return makeImmutableImpl(data, options);
 }
 
 const cloneStrategy = new DefaultCloneStrategy();
@@ -138,10 +127,8 @@ function makeImmutableImpl<T>(
         return makeImmutableImpl<T>(result, options);
     };
 
-    return Object.assign(
-        {},
-        data as any,
-        {
-            __set
-        });
+    return {
+        ...data as any,
+        __set
+    };
 }

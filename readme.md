@@ -5,6 +5,7 @@ Type-safe, generic immutable datastructure for Typescript. Does not require manu
 
 ## Changelog
  
+ * **2.1.0** - Adding some array helpers
  * **2.0.1** - Vastly simplified 
  * **0.4.5** - Added some methods for dealing with native arrays
  * **0.4.0** - Removed incomplete immutablejs adapter for now
@@ -128,7 +129,7 @@ would result in a compiler error, because the types of `id` and `"12"` do not ma
 #### Add element
 
 ```TypeScript
-const c = makeImmutable({
+const c1 = makeImmutable({
     foo: {
         "a": 42,
         "b": 23
@@ -147,7 +148,7 @@ const c2 = c.__set(x => x.foo, x => ({
 #### Remove element
 
 ```TypeScript
-const c = makeImmutable({
+const c1 = makeImmutable({
     foo: {
         "a": 42,
         "b": 23
@@ -160,6 +161,26 @@ const c2 = c.__set(x => x.foo, ({ [p], ...r }) => r);
 
 // c1.foo !== c2.foo => true
 // c2.foo deep equals { "a": 42 }
+```
+
+### Arrays
+
+`immuts` includes a few helpers for common array operations, returning new versions of the modified arrays: `push`, `pop`, `splice`, `remove`.
+
+```TypeScript
+const c1 = makeImmutable({
+    foo: [1, 2]
+});
+
+const c2 = c1.__set(x => x.foo, x => push(x, 3));
+
+// c2.foo !== c1.foo
+// c2.foo deep equals [1,2,3]
+
+const c3 = c2.__set(x => x.foo, x => remove(x, 1));
+
+// c3.foo !== c2.foo
+// c3.foo deep equals [1,3]
 ```
 
 ## Limitations

@@ -30,9 +30,6 @@ var config = {
     libraryTarget: 'umd',
     umdNamedDefine: true
   },
-  externals: {
-    "immutable": "immutable"
-  },
   module: {
     loaders: [
       { test: /\.tsx?$/, loaders: ['ts', `ifdef-loader?${q}`], exclude: /node_modules/ }

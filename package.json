@@ -1,6 +1,6 @@
 {
   "name": "immuts",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Simple, type-safe immutable data structure for Typescript",
   "repository": "cschleiden/immuts",
   "main": "dist/immuts.min.js",
@@ -30,8 +30,8 @@
     "mocha": "^3.0.2",
     "requirejs": "^2.2.0",
     "rimraf": "^2.5.4",
-    "ts-loader": "2.0.3",
-    "typescript": "2.6.2",
+    "ts-loader": "3.5.0",
+    "typescript": "2.8.1",
     "webpack": "^1.13.2"
   }
 }

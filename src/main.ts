@@ -1,2 +1,2 @@
-export { IImmutableCloneStrategy } from "./strategies/clone";
-export { makeImmutable, IImmutable } from "./immutable";
+export { makeImmutable, IImmutable, IImmutableOptions } from "./immutable";
+export * from "./array";
