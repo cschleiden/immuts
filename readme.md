@@ -1,3 +1,7 @@
+# Note
+
+At this point I recommend to use one of the more established libraries that build on the same idea as this library, for examle: https://github.com/mweststrate/immer
+
 immuts
 =====
 
